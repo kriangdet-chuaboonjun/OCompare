@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-read-backup-snapshot"
+description = "Enables the read_backup_snapshot command without any pre-configured scope."
+commands.allow = ["read_backup_snapshot"]
+
+[[permission]]
+identifier = "deny-read-backup-snapshot"
+description = "Denies the read_backup_snapshot command without any pre-configured scope."
+commands.deny = ["read_backup_snapshot"]

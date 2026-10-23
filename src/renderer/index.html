@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>OCompare</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="toolbar">
+      <img id="logo" alt="OCompare" title="OCompare" />
+      <div class="mode-switch" role="group" aria-label="Comparison mode">
+        <button class="mode-button active" data-mode="files" aria-pressed="true">Files</button>
+        <button class="mode-button" data-mode="folders" aria-pressed="false">Folders</button>
+      </div>
+      <div id="file-tools">
+      <i class="sep"></i>
+      <button data-cmd="viewAll" class="toggle" title="Show all lines">✱<span>All</span></button>
+      <button data-cmd="viewDiffs" class="toggle" title="Show only differences">≠<span>Diffs</span></button>
+      <button data-cmd="viewContext" class="toggle" title="Differences with context">☰<span>Context</span></button>
+      <i class="sep"></i>
+      <button data-cmd="ignoreWs" class="toggle" title="Ignore leading/trailing whitespace">␣<span>Minor</span></button>
+      <button data-cmd="wrap" class="toggle" title="Word wrap">↵<span>Wrap</span></button>
+      <i class="sep"></i>
+      <button data-cmd="copyToRight" title="Copy current section to the right (Alt+Right)">⇨<span>Copy →</span></button>
+      <button data-cmd="copyToLeft" title="Copy current section to the left (Alt+Left)">⇦<span>← Copy</span></button>
+      <i class="sep"></i>
+      <button data-cmd="nextDiff" title="Next difference (F7 / Ctrl+N)">⬇<span>Next Section</span></button>
+      <button data-cmd="prevDiff" title="Previous difference (Shift+F7 / Ctrl+P)">⬆<span>Prev Section</span></button>
+      <i class="sep"></i>
+      <button data-cmd="swap" title="Swap sides">⇄<span>Swap</span></button>
+      <button data-cmd="reload" title="Reload both files (F5)">⟳<span>Reload</span></button>
+      <button data-cmd="rules" title="Regex comparison rules"><span>Rules</span></button>
+      <button data-cmd="history" title="Backup history for the focused file"><span>History</span></button>
+      </div>
+      <div id="folder-tools" hidden></div>
+      <button id="theme-toggle" type="button" aria-label="Dark Mode" aria-pressed="false" title="Switch to Dark Mode"><span>Light</span></button>
+    </div>
+
+    <div id="panes-head">
+      <div class="side-head" data-side="left">
+        <div class="pathbar">
+          <input class="path" aria-label="Left file path" placeholder="Drop a file here or click Open…" spellcheck="false" />
+          <button class="open" aria-label="Open left file" title="Open file">📂</button>
+          <button class="save" aria-label="Save left file" title="Save (Ctrl+S)" disabled>💾</button>
+        </div>
+        <div class="infobar">
+          <span class="dirty"></span><span class="mtime"></span><span class="size"></span>
+          <select class="lang" aria-label="Left language"></select><span class="enc"></span><span class="eol"></span>
+        </div>
+      </div>
+      <div class="side-head" data-side="right">
+        <div class="pathbar">
+          <input class="path" aria-label="Right file path" placeholder="Drop a file here or click Open…" spellcheck="false" />
+          <button class="open" aria-label="Open right file" title="Open file">📂</button>
+          <button class="save" aria-label="Save right file" title="Save (Ctrl+S)" disabled>💾</button>
+        </div>
+        <div class="infobar">
+          <span class="dirty"></span><span class="mtime"></span><span class="size"></span>
+          <select class="lang" aria-label="Right language"></select><span class="enc"></span><span class="eol"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="editor"></div>
+    <section id="folder-panel" aria-label="Folder comparison workspace" hidden></section>
+
+    <div id="statusbar">
+      <span id="st-diffs"></span>
+      <span id="st-pos"></span>
+      <span id="st-msg" role="status" aria-live="polite" aria-atomic="true"></span>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>OCompare Monaco regression harness</title></head>
+<body style="margin:0"><div id="editor" style="width:100vw;height:100vh"></div>
+<script type="module">
+  import '/src/renderer/monacoSetup.ts'
+  import * as monaco from 'monaco-editor'
+  import { DiffView } from '/src/renderer/diffView.ts'
+  import { defineThemes } from '/src/renderer/theme.ts'
+  defineThemes()
+  window.editorTest = { view: new DiffView(document.getElementById('editor')), monaco }
+</script></body>
+</html>

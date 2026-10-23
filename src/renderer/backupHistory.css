@@ -1,0 +1,12 @@
+.backup-history { width: min(760px, 92vw); }
+.backup-history-path { overflow-wrap: anywhere; font-weight: 600; margin-top: 0; }
+.backup-history-list { overflow: auto; max-height: 42vh; border: 1px solid var(--dialog-input-border); }
+.backup-history-list > p { margin: 16px; }
+.backup-history table { width: 100%; border-collapse: collapse; font: inherit; }
+.backup-history th, .backup-history td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--dialog-input-border); white-space: nowrap; }
+.backup-history th { position: sticky; top: 0; background: var(--dialog-heading); }
+.backup-history tbody tr:has(input:checked) { background: var(--dialog-hover); }
+.backup-history tbody tr { cursor: pointer; }
+.backup-history input { accent-color: var(--focus); }
+.backup-history-message { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1em; margin-bottom: 0; }
+.backup-history button:disabled { opacity: .55; cursor: default; }

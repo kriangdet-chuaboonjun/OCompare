@@ -1,0 +1,5 @@
+PASS: 4 control interaction groups
+  Name column, pane splitter and log resize use pointer capture and keep row/header widths aligned
+  Selected expand/collapse, Select all/invert and context-menu Open files reuse toolbar commands
+  Home opens Sessions; Open restores settings without auto-scan/editor loss; Delete persists only the saved session removal
+  Browser DPR 1.5 and 1000x700 render and compare; this is not Windows system-DPI verification

@@ -1,0 +1,2 @@
+1 24 "@CMAKE_CURRENT_BINARY_DIR@/launcher.manifest"
+101 ICON "@OCOMPARE_ICON@"

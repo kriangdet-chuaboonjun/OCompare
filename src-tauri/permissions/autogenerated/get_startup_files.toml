@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-get-startup-files"
+description = "Enables the get_startup_files command without any pre-configured scope."
+commands.allow = ["get_startup_files"]
+
+[[permission]]
+identifier = "deny-get-startup-files"
+description = "Denies the get_startup_files command without any pre-configured scope."
+commands.deny = ["get_startup_files"]

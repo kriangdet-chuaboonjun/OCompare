@@ -1,0 +1,65 @@
+{
+  "findings": [
+    {
+      "id": "A01",
+      "severity": "P1"
+    },
+    {
+      "id": "A02",
+      "severity": "P1"
+    },
+    {
+      "id": "A03",
+      "severity": "P1"
+    },
+    {
+      "id": "A04",
+      "severity": "P1"
+    },
+    {
+      "id": "A05",
+      "severity": "P1"
+    },
+    {
+      "id": "A06",
+      "severity": "P1"
+    },
+    {
+      "id": "A07",
+      "severity": "P2"
+    },
+    {
+      "id": "A08",
+      "severity": "P2"
+    }
+  ],
+  "json": 26,
+  "png": 13,
+  "detectors": [
+    {
+      "file": "detector-files-dark.json",
+      "count": 39
+    },
+    {
+      "file": "detector-files-light.json",
+      "count": 3
+    },
+    {
+      "file": "detector-folders-dark.json",
+      "count": 5
+    },
+    {
+      "file": "detector-folders-light.json",
+      "count": 5
+    }
+  ],
+  "nativeAssetsMatchDist": true,
+  "restored": {
+    "theme": "dark",
+    "width": 1400,
+    "height": 900,
+    "mode": "true",
+    "dialogs": 0,
+    "tabs": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Local file comparison in the main window only",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:default", "core:window:allow-set-title", "core:window:allow-destroy",
+    "core:window:allow-set-theme",
+    "core:window:allow-scale-factor", "dialog:allow-open", "dialog:allow-save", "dialog:allow-confirm",
+    "allow-read-file", "allow-save-file", "allow-watch-file", "allow-get-startup-files",
+    "allow-get-startup-comparison",
+    "allow-watch-folders", "allow-stop-folder-watch",
+    "allow-validate-comparison-rules", "allow-normalize-comparison-pair",
+    "allow-list-backup-history", "allow-read-backup-snapshot", "allow-restore-backup",
+    "allow-compare-folders", "allow-cancel-folder-compare",
+    "allow-load-folder-sessions", "allow-save-folder-sessions", "allow-folder-disk-space",
+    "allow-plan-folder-copy", "allow-execute-folder-copy", "allow-discard-folder-copy"
+  ]
+}

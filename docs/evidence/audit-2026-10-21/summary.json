@@ -1,0 +1,223 @@
+{
+  "files-dark-native.json": {
+    "viewport": {
+      "width": 1400,
+      "height": 900
+    },
+    "pageScrollWidth": 1400,
+    "clipped": [],
+    "unnamedSelects": [
+      {
+        "class": "lang",
+        "ariaLabel": null,
+        "labelledby": null,
+        "labels": 0,
+        "x": 209.3984375,
+        "y": 118,
+        "width": 173,
+        "height": 16.5,
+        "right": 382.3984375,
+        "bottom": 134.5
+      },
+      {
+        "class": "lang",
+        "ariaLabel": null,
+        "labelledby": null,
+        "labels": 0,
+        "x": 906.3984375,
+        "y": 118,
+        "width": 173,
+        "height": 16.5,
+        "right": 1079.3984375,
+        "bottom": 134.5
+      }
+    ],
+    "grid": null,
+    "separators": [],
+    "logo": {
+      "naturalWidth": 1254,
+      "naturalHeight": 1254,
+      "x": 10,
+      "y": 11,
+      "width": 32,
+      "height": 32,
+      "right": 42,
+      "bottom": 43
+    }
+  },
+  "files-light-900.json": {
+    "viewport": {
+      "width": 900,
+      "height": 650
+    },
+    "pageScrollWidth": 960,
+    "clipped": [],
+    "unnamedSelects": [
+      {
+        "class": "lang",
+        "ariaLabel": null,
+        "labelledby": null,
+        "labels": 0,
+        "x": 209.3984375,
+        "y": 210,
+        "width": 173,
+        "height": 16.5,
+        "right": 382.3984375,
+        "bottom": 226.5
+      },
+      {
+        "class": "lang",
+        "ariaLabel": null,
+        "labelledby": null,
+        "labels": 0,
+        "x": 680.953125,
+        "y": 210,
+        "width": 173,
+        "height": 16.5,
+        "right": 853.953125,
+        "bottom": 226.5
+      }
+    ],
+    "grid": null,
+    "separators": [],
+    "logo": {
+      "naturalWidth": 1254,
+      "naturalHeight": 1254,
+      "x": 10,
+      "y": 10,
+      "width": 32,
+      "height": 32,
+      "right": 42,
+      "bottom": 42
+    }
+  },
+  "files-light-640.json": {
+    "viewport": {
+      "width": 640,
+      "height": 480
+    },
+    "pageScrollWidth": 960,
+    "clipped": [
+      {
+        "text": "Reload",
+        "x": 641,
+        "right": 697
+      },
+      {
+        "text": "Rules",
+        "x": 699,
+        "right": 755
+      },
+      {
+        "text": "History",
+        "x": 757,
+        "right": 813
+      }
+    ],
+    "unnamedSelects": [
+      {
+        "class": "lang",
+        "ariaLabel": null,
+        "labelledby": null,
+        "labels": 0,
+        "x": 209.3984375,
+        "y": 223,
+        "width": 173,
+        "height": 16.5,
+        "right": 382.3984375,
+        "bottom": 239.5
+      },
+      {
+        "class": "lang",
+        "ariaLabel": null,
+        "labelledby": null,
+        "labels": 0,
+        "x": 680.953125,
+        "y": 223,
+        "width": 173,
+        "height": 16.5,
+        "right": 853.953125,
+        "bottom": 239.5
+      }
+    ],
+    "grid": null,
+    "separators": [],
+    "logo": {
+      "naturalWidth": 1254,
+      "naturalHeight": 1254,
+      "x": 10,
+      "y": 10,
+      "width": 32,
+      "height": 32,
+      "right": 42,
+      "bottom": 42
+    }
+  },
+  "folders-dark-native.json": {
+    "viewport": {
+      "width": 1400,
+      "height": 900
+    },
+    "pageScrollWidth": 1400,
+    "clipped": [],
+    "unnamedSelects": [],
+    "grid": {
+      "colcount": "7",
+      "rowcount": "8",
+      "firstRowCells": 3,
+      "headerCells": 6,
+      "renderedRows": 7,
+      "selection": "7 total · 7 shown · 1 selected · Left 47 B / Right 49 B"
+    },
+    "separators": [
+      {
+        "label": "Resize comparison panes",
+        "tabIndex": 0,
+        "orientation": null,
+        "value": null,
+        "x": 684,
+        "y": 117,
+        "width": 32,
+        "height": 24,
+        "right": 716,
+        "bottom": 141
+      },
+      {
+        "label": "Resize log",
+        "tabIndex": 0,
+        "orientation": null,
+        "value": null,
+        "x": 0,
+        "y": 738.6015625,
+        "width": 1400,
+        "height": 5,
+        "right": 1400,
+        "bottom": 743.6015625
+      }
+    ],
+    "logo": {
+      "naturalWidth": 1254,
+      "naturalHeight": 1254,
+      "x": 10,
+      "y": 11,
+      "width": 32,
+      "height": 32,
+      "right": 42,
+      "bottom": 43
+    }
+  },
+  "tabs-arrow-navigation.json": {
+    "selected": "Untitled ↔ Untitled",
+    "count": 2,
+    "focus": "<button class=\"file-tab-label\" type=\"button\" role=\"tab\" aria-selected=\"true\" tabindex=\"0\" title=\"Untitled ↔ Untitled\">Untitled ↔ Untitled</button>"
+  },
+  "tabs-control-navigation.json": {
+    "selected": "left.sql ↔ right.sql"
+  },
+  "detector-folders-light.json": {
+    "total": 5,
+    "counts": {
+      "tiny-text": 5
+    }
+  }
+}

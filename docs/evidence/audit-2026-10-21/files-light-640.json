@@ -1,0 +1,265 @@
+{
+  "viewport": {
+    "width": 640,
+    "height": 480
+  },
+  "theme": "light",
+  "pageScrollWidth": 960,
+  "toolbar": [
+    {
+      "text": "Files",
+      "disabled": false,
+      "x": 54,
+      "y": 4,
+      "width": 62,
+      "height": 44,
+      "right": 116,
+      "bottom": 48
+    },
+    {
+      "text": "Folders",
+      "disabled": false,
+      "x": 118,
+      "y": 4,
+      "width": 62,
+      "height": 44,
+      "right": 180,
+      "bottom": 48
+    },
+    {
+      "text": "All",
+      "disabled": false,
+      "x": 16.6875,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 72.6875,
+      "bottom": 107
+    },
+    {
+      "text": "Diffs",
+      "disabled": false,
+      "x": 74.6875,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 130.6875,
+      "bottom": 107
+    },
+    {
+      "text": "Context",
+      "disabled": false,
+      "x": 132.6875,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 188.6875,
+      "bottom": 107
+    },
+    {
+      "text": "Minor",
+      "disabled": false,
+      "x": 201.3671875,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 257.3671875,
+      "bottom": 107
+    },
+    {
+      "text": "Wrap",
+      "disabled": false,
+      "x": 259.3671875,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 315.3671875,
+      "bottom": 107
+    },
+    {
+      "text": "Copy →",
+      "disabled": false,
+      "x": 328.0546875,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 384.0546875,
+      "bottom": 107
+    },
+    {
+      "text": "← Copy",
+      "disabled": false,
+      "x": 386.0546875,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 442.0546875,
+      "bottom": 107
+    },
+    {
+      "text": "Next Section",
+      "disabled": false,
+      "x": 454.7421875,
+      "y": 50,
+      "width": 56.7890625,
+      "height": 57,
+      "right": 511.53125,
+      "bottom": 107
+    },
+    {
+      "text": "Prev Section",
+      "disabled": false,
+      "x": 513.53125,
+      "y": 50,
+      "width": 56.78125,
+      "height": 57,
+      "right": 570.3125,
+      "bottom": 107
+    },
+    {
+      "text": "Swap",
+      "disabled": false,
+      "x": 583,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 639,
+      "bottom": 107
+    },
+    {
+      "text": "Reload",
+      "disabled": false,
+      "x": 641,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 697,
+      "bottom": 107
+    },
+    {
+      "text": "Rules",
+      "disabled": false,
+      "x": 699,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 755,
+      "bottom": 107
+    },
+    {
+      "text": "History",
+      "disabled": false,
+      "x": 757,
+      "y": 50,
+      "width": 56,
+      "height": 57,
+      "right": 813,
+      "bottom": 107
+    },
+    {
+      "text": "Light",
+      "disabled": false,
+      "x": 578,
+      "y": 109,
+      "width": 56,
+      "height": 46,
+      "right": 634,
+      "bottom": 155
+    }
+  ],
+  "unnamedSelects": [
+    {
+      "class": "lang",
+      "ariaLabel": null,
+      "labelledby": null,
+      "labels": 0,
+      "x": 209.3984375,
+      "y": 223,
+      "width": 173,
+      "height": 16.5,
+      "right": 382.3984375,
+      "bottom": 239.5
+    },
+    {
+      "class": "lang",
+      "ariaLabel": null,
+      "labelledby": null,
+      "labels": 0,
+      "x": 680.953125,
+      "y": 223,
+      "width": 173,
+      "height": 16.5,
+      "right": 853.953125,
+      "bottom": 239.5
+    }
+  ],
+  "status": [
+    {
+      "id": "statusbar",
+      "text": "\n      5 difference section(s)\n      Right  1:1\n      Opened E:\\Project_local\\O_Compare_Rust\\samples\\right.sql\n    ",
+      "role": null,
+      "live": null
+    },
+    {
+      "id": "st-diffs",
+      "text": "5 difference section(s)",
+      "role": null,
+      "live": null
+    },
+    {
+      "id": "st-msg",
+      "text": "Opened E:\\Project_local\\O_Compare_Rust\\samples\\right.sql",
+      "role": null,
+      "live": null
+    }
+  ],
+  "separators": [],
+  "grid": null,
+  "resources": [
+    {
+      "name": "index-BCYgUtLw.js",
+      "duration": 47.69999998807907,
+      "decodedBodySize": 4082574
+    },
+    {
+      "name": "index-7Xnz-5yW.css",
+      "duration": 6,
+      "decodedBodySize": 205722
+    },
+    {
+      "name": "O_compare_icon-eP16h2-G.png",
+      "duration": 10.699999988079071,
+      "decodedBodySize": 825557
+    },
+    {
+      "name": "editor.worker-BmdWdrHZ.js",
+      "duration": -6,
+      "decodedBodySize": 303777
+    },
+    {
+      "name": "sql-NEE52Syq.js",
+      "duration": 1.199999988079071,
+      "decodedBodySize": 8840
+    },
+    {
+      "name": "regexDiff.worker-CAjArUze.js",
+      "duration": -4.100000023841858,
+      "decodedBodySize": 106503
+    },
+    {
+      "name": "codicon-DF1abBS2.ttf",
+      "duration": 4.099999964237213,
+      "decodedBodySize": 153228
+    }
+  ],
+  "logo": {
+    "naturalWidth": 1254,
+    "naturalHeight": 1254,
+    "x": 10,
+    "y": 10,
+    "width": 32,
+    "height": 32,
+    "right": 42,
+    "bottom": 42
+  }
+}

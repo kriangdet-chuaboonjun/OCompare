@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Regex adapter regression</title></head>
+<body style="margin:0"><div id="editor" style="width:100vw;height:100vh"></div>
+<script type="module">
+import '/src/renderer/monacoSetup.ts'
+import * as monaco from 'monaco-editor'
+import { RegexDiffAdapter } from '/src/renderer/regexDiff.ts'
+import { openComparisonRules } from '/src/renderer/comparisonRules.ts'
+const normalizePair = async (left, right, rules) => {
+  const response = await fetch('/normalize', {method:'POST',body:JSON.stringify({left,right,rules})})
+  if (!response.ok) throw new Error(await response.text())
+  return response.json()
+}
+const status = []
+const adapter = new RegexDiffAdapter(normalizePair, message => status.push(message))
+let computedVersions = []
+const compute = adapter.computeDiff.bind(adapter)
+adapter.computeDiff = async (...args) => {
+  const versions = [args[0].getVersionId(), args[1].getVersionId()]
+  const result = await compute(...args)
+  if (result) computedVersions = versions
+  return result
+}
+const editor = monaco.editor.createDiffEditor(document.getElementById('editor'), { originalEditable:true, automaticLayout:true }, adapter.overrideServices())
+const left = monaco.editor.createModel('', 'plaintext'), right = monaco.editor.createModel('', 'plaintext')
+editor.setModel({original:left,modified:right})
+window.regexTest = { editor, adapter, left, right, status, monaco, openComparisonRules, normalizePair, computed: () => computedVersions }
+</script></body></html>

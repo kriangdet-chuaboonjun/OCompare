@@ -1,0 +1,38 @@
+[
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\src\\renderer\\index.html",
+    "Hash": "3F0871259A853FD29D6AF6DDD86402228B1DCD6C87367652F6652472009ED6F3"
+  },
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\src\\renderer\\styles.css",
+    "Hash": "D5660853C5F61CD9A77393842725079A6C64E541E54609DBE688C88EE4F3959C"
+  },
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\src\\renderer\\main.ts",
+    "Hash": "4B2B6B68265C1406BF36482C2F54C9DA7A76C254E211B35C8E2350CCDC588747"
+  },
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\src\\renderer\\theme.ts",
+    "Hash": "EAE3AE600128F5670FA3CFBC96C292EEE15C2F48DB23B29F3925D71CFEC302CC"
+  },
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\src\\renderer\\folderView.ts",
+    "Hash": "04250A00D3E71920109D6F235E40D8D48AEE06C04008A223810DFDB1C05B7801"
+  },
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\assets\\O_compare_toolbar.png",
+    "Hash": "650A00ABD06039F1F9CF1C690F1030D84043AB356227470E2D5EAA4FED6B9D02"
+  },
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\scripts\\test-accessibility.mjs",
+    "Hash": "4E5DA10D6DD73B27FA3FBCDACA0ABF6D68D698346FE530C40270A3315FFC062E"
+  },
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\package.json",
+    "Hash": "56B220D8C07329CE87BA915482DD71D9D60A8361ADA5E70C8775A16EE49723F2"
+  },
+  {
+    "Path": "E:\\Project_local\\O_Compare_Rust\\README.md",
+    "Hash": "AE0D9BA26331B35E05817137B327A8939B0F010E6E2D35730071873547CD5FE1"
+  }
+]

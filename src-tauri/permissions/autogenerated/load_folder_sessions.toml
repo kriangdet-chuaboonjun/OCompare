@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-load-folder-sessions"
+description = "Enables the load_folder_sessions command without any pre-configured scope."
+commands.allow = ["load_folder_sessions"]
+
+[[permission]]
+identifier = "deny-load-folder-sessions"
+description = "Denies the load_folder_sessions command without any pre-configured scope."
+commands.deny = ["load_folder_sessions"]

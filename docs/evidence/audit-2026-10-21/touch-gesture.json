@@ -1,0 +1,6 @@
+{
+  "before": "50%",
+  "during": "52.5%",
+  "afterCancel": "50%",
+  "pointerMoveCleared": true
+}

@@ -1,0 +1,8 @@
+{
+  "source": "native source",
+  "destination": "native source",
+  "sha256Equal": true,
+  "mtimeEqual": true,
+  "release": "0.3.0",
+  "nativeIpc": true
+}

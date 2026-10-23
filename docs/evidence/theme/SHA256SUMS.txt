@@ -1,0 +1,2 @@
+b2c4540700b50869188baaab87010a2f5d5cbd15b3771aae493dd1198e8842e1  O_Compare-0.3.5-portable.exe
+d8862abafc4296a3bff694248090bf6ae7fda0db4c47463de61dcde160066daf  O_Compare-0.3.5-x64-setup.exe

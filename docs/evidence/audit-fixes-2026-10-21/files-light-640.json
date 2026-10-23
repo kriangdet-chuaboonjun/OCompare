@@ -1,0 +1,265 @@
+{
+  "viewport": {
+    "width": 640,
+    "height": 480
+  },
+  "theme": "light",
+  "pageScrollWidth": 640,
+  "toolbar": [
+    {
+      "text": "Files",
+      "disabled": false,
+      "x": 54,
+      "y": 4,
+      "width": 62,
+      "height": 44,
+      "right": 116,
+      "bottom": 48
+    },
+    {
+      "text": "Folders",
+      "disabled": false,
+      "x": 118,
+      "y": 4,
+      "width": 62,
+      "height": 44,
+      "right": 180,
+      "bottom": 48
+    },
+    {
+      "text": "All",
+      "disabled": false,
+      "x": 17,
+      "y": 50,
+      "width": 56,
+      "height": 44,
+      "right": 73,
+      "bottom": 94
+    },
+    {
+      "text": "Diffs",
+      "disabled": false,
+      "x": 75,
+      "y": 50,
+      "width": 56,
+      "height": 44,
+      "right": 131,
+      "bottom": 94
+    },
+    {
+      "text": "Context",
+      "disabled": false,
+      "x": 133,
+      "y": 50,
+      "width": 56,
+      "height": 44,
+      "right": 189,
+      "bottom": 94
+    },
+    {
+      "text": "Minor",
+      "disabled": false,
+      "x": 202,
+      "y": 50,
+      "width": 56,
+      "height": 44,
+      "right": 258,
+      "bottom": 94
+    },
+    {
+      "text": "Wrap",
+      "disabled": false,
+      "x": 260,
+      "y": 50,
+      "width": 56,
+      "height": 44,
+      "right": 316,
+      "bottom": 94
+    },
+    {
+      "text": "Copy →",
+      "disabled": false,
+      "x": 329,
+      "y": 50,
+      "width": 56,
+      "height": 44,
+      "right": 385,
+      "bottom": 94
+    },
+    {
+      "text": "← Copy",
+      "disabled": false,
+      "x": 387,
+      "y": 50,
+      "width": 56,
+      "height": 44,
+      "right": 443,
+      "bottom": 94
+    },
+    {
+      "text": "Next Section",
+      "disabled": false,
+      "x": 456,
+      "y": 50,
+      "width": 76.3671875,
+      "height": 44,
+      "right": 532.3671875,
+      "bottom": 94
+    },
+    {
+      "text": "Prev Section",
+      "disabled": false,
+      "x": 534.3671875,
+      "y": 50,
+      "width": 76.3671875,
+      "height": 44,
+      "right": 610.734375,
+      "bottom": 94
+    },
+    {
+      "text": "Swap",
+      "disabled": false,
+      "x": 6,
+      "y": 96,
+      "width": 56,
+      "height": 44,
+      "right": 62,
+      "bottom": 140
+    },
+    {
+      "text": "Reload",
+      "disabled": false,
+      "x": 64,
+      "y": 96,
+      "width": 56,
+      "height": 44,
+      "right": 120,
+      "bottom": 140
+    },
+    {
+      "text": "Rules",
+      "disabled": false,
+      "x": 122,
+      "y": 96,
+      "width": 56,
+      "height": 44,
+      "right": 178,
+      "bottom": 140
+    },
+    {
+      "text": "History",
+      "disabled": false,
+      "x": 180,
+      "y": 96,
+      "width": 56,
+      "height": 44,
+      "right": 236,
+      "bottom": 140
+    },
+    {
+      "text": "Light",
+      "disabled": false,
+      "x": 578,
+      "y": 142,
+      "width": 56,
+      "height": 46,
+      "right": 634,
+      "bottom": 188
+    }
+  ],
+  "unnamedSelects": [
+    {
+      "class": "lang",
+      "ariaLabel": "Left language",
+      "labelledby": null,
+      "labels": 0,
+      "x": 8,
+      "y": 275,
+      "width": 173,
+      "height": 16.5,
+      "right": 181,
+      "bottom": 291.5
+    },
+    {
+      "class": "lang",
+      "ariaLabel": "Right language",
+      "labelledby": null,
+      "labels": 0,
+      "x": 325,
+      "y": 275,
+      "width": 173,
+      "height": 16.5,
+      "right": 498,
+      "bottom": 291.5
+    }
+  ],
+  "status": [
+    {
+      "id": "statusbar",
+      "text": "\n      5 difference section(s)\n      Right  1:1\n      Opened E:\\Project_local\\O_Compare_Rust\\samples\\right.sql\n    ",
+      "role": null,
+      "live": null
+    },
+    {
+      "id": "st-diffs",
+      "text": "5 difference section(s)",
+      "role": null,
+      "live": null
+    },
+    {
+      "id": "st-msg",
+      "text": "Opened E:\\Project_local\\O_Compare_Rust\\samples\\right.sql",
+      "role": "status",
+      "live": "polite"
+    }
+  ],
+  "separators": [],
+  "grid": null,
+  "resources": [
+    {
+      "name": "index-BcGxk5dT.js",
+      "duration": 39.80000001192093,
+      "decodedBodySize": 4086420
+    },
+    {
+      "name": "index-C1KJ9XC8.css",
+      "duration": 10.399999976158142,
+      "decodedBodySize": 206081
+    },
+    {
+      "name": "O_compare_toolbar-BxxKaWNJ.png",
+      "duration": 1,
+      "decodedBodySize": 15773
+    },
+    {
+      "name": "editor.worker-BmdWdrHZ.js",
+      "duration": -5.099999964237213,
+      "decodedBodySize": 303777
+    },
+    {
+      "name": "sql-NEE52Syq.js",
+      "duration": 1.199999988079071,
+      "decodedBodySize": 8840
+    },
+    {
+      "name": "regexDiff.worker-CAjArUze.js",
+      "duration": -3.100000023841858,
+      "decodedBodySize": 106503
+    },
+    {
+      "name": "codicon-DF1abBS2.ttf",
+      "duration": 3.099999964237213,
+      "decodedBodySize": 153228
+    }
+  ],
+  "logo": {
+    "naturalWidth": 128,
+    "naturalHeight": 128,
+    "x": 10,
+    "y": 10,
+    "width": 32,
+    "height": 32,
+    "right": 42,
+    "bottom": 42
+  }
+}

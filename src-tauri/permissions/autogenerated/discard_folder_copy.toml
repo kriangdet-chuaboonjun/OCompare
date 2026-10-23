@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-discard-folder-copy"
+description = "Enables the discard_folder_copy command without any pre-configured scope."
+commands.allow = ["discard_folder_copy"]
+
+[[permission]]
+identifier = "deny-discard-folder-copy"
+description = "Denies the discard_folder_copy command without any pre-configured scope."
+commands.deny = ["discard_folder_copy"]

@@ -1,0 +1,4 @@
+LIBRARY "OCompare.Explorer.dll"
+EXPORTS
+  DllCanUnloadNow PRIVATE
+  DllGetClassObject PRIVATE

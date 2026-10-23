@@ -1,0 +1,142 @@
+{
+  "detectors": [
+    {
+      "file": "detector-files-dark.json",
+      "total": 1,
+      "counts": {
+        "border-accent-on-rounded": 1
+      }
+    },
+    {
+      "file": "detector-files-light.json",
+      "total": 1,
+      "counts": {
+        "border-accent-on-rounded": 1
+      }
+    },
+    {
+      "file": "detector-folders-dark.json",
+      "total": 5,
+      "counts": {
+        "tiny-text": 5
+      }
+    },
+    {
+      "file": "detector-folders-light.json",
+      "total": 5,
+      "counts": {
+        "tiny-text": 5
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "file": "files-light-900.json",
+      "viewport": {
+        "width": 900,
+        "height": 650
+      },
+      "documentWidth": 900,
+      "clipped": 0
+    },
+    {
+      "file": "files-light-640.json",
+      "viewport": {
+        "width": 640,
+        "height": 480
+      },
+      "documentWidth": 640,
+      "clipped": 0
+    },
+    {
+      "file": "folders-light-900.json",
+      "viewport": {
+        "width": 900,
+        "height": 650
+      },
+      "documentWidth": 900,
+      "clipped": 0
+    },
+    {
+      "file": "folders-light-640.json",
+      "viewport": {
+        "width": 640,
+        "height": 480
+      },
+      "documentWidth": 640,
+      "clipped": 0
+    }
+  ],
+  "native": {
+    "keyboard": [
+      {
+        "label": "Resize left name",
+        "before": 439,
+        "during": 447,
+        "restored": 439
+      },
+      {
+        "label": "Resize left size",
+        "before": 88,
+        "during": 96,
+        "restored": 88
+      },
+      {
+        "label": "Resize left modified",
+        "before": 156,
+        "during": 164,
+        "restored": 156
+      },
+      {
+        "label": "Resize right name",
+        "before": 439,
+        "during": 447,
+        "restored": 439
+      },
+      {
+        "label": "Resize right size",
+        "before": 88,
+        "during": 96,
+        "restored": 88
+      },
+      {
+        "label": "Resize right modified",
+        "before": 156,
+        "during": 164,
+        "restored": 156
+      }
+    ],
+    "assets": [
+      {
+        "name": "index-BcGxk5dT.js",
+        "bytes": 4086420,
+        "matchesDist": true,
+        "sha256": "857a70f53d429c9bb2127388451491dfc90e3bd1b1a7d66f8d85f8f2bfbab690"
+      },
+      {
+        "name": "index-C1KJ9XC8.css",
+        "bytes": 206081,
+        "matchesDist": true,
+        "sha256": "cd1294c23b368a698e82ecfc8cebce2aa62590e2443f8df74fedf2f0b5cb24cc"
+      }
+    ],
+    "touch": {
+      "before": "50",
+      "during": "52.5",
+      "secondPointer": "52.5",
+      "afterCancel": "50",
+      "cleared": true,
+      "nextMouseDrag": "52",
+      "restored": "50"
+    },
+    "headers": 7,
+    "cells": 7
+  },
+  "executable": {
+    "path": "src-tauri/target/release/o-compare-rust.exe",
+    "bytes": 14229504,
+    "sha256": "1bb29802b38824e1e26db7d0fe6786a6d6cbd9fb0b13d0de3c22ee122781a4b5"
+  },
+  "regressionGroups": 9,
+  "fullSuite": "PASS"
+}

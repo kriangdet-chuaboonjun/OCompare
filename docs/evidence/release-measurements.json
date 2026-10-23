@@ -1,0 +1,59 @@
+{
+  "method": "Three alternating hidden launches with the same sample arguments. Tauri: time to loaded title; Electron hidden title unavailable, startup time null and content loading unverified. Summed process-tree memory 2 seconds later; samples not synchronized to identical readiness. OS cache not cleared. Working sets may share pages. Do not infer relative startup speed or RAM savings from these observations.",
+  "measurements": [
+    {
+      "application": "Electron",
+      "iteration": 1,
+      "timeToLoadedTitleMs": null,
+      "loadedTitleVerified": false,
+      "processCount": 4,
+      "workingSetMiB": 550.57,
+      "privateMemoryMiB": 377.8
+    },
+    {
+      "application": "Tauri",
+      "iteration": 1,
+      "timeToLoadedTitleMs": 836.0,
+      "loadedTitleVerified": true,
+      "processCount": 7,
+      "workingSetMiB": 444.28,
+      "privateMemoryMiB": 327.95
+    },
+    {
+      "application": "Electron",
+      "iteration": 2,
+      "timeToLoadedTitleMs": null,
+      "loadedTitleVerified": false,
+      "processCount": 4,
+      "workingSetMiB": 550.48,
+      "privateMemoryMiB": 382.87
+    },
+    {
+      "application": "Tauri",
+      "iteration": 2,
+      "timeToLoadedTitleMs": 706.5,
+      "loadedTitleVerified": true,
+      "processCount": 7,
+      "workingSetMiB": 426.27,
+      "privateMemoryMiB": 324.77
+    },
+    {
+      "application": "Electron",
+      "iteration": 3,
+      "timeToLoadedTitleMs": null,
+      "loadedTitleVerified": false,
+      "processCount": 4,
+      "workingSetMiB": 544.77,
+      "privateMemoryMiB": 369.02
+    },
+    {
+      "application": "Tauri",
+      "iteration": 3,
+      "timeToLoadedTitleMs": 704.4,
+      "loadedTitleVerified": true,
+      "processCount": 7,
+      "workingSetMiB": 427.2,
+      "privateMemoryMiB": 325.77
+    }
+  ]
+}

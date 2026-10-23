@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-stop-folder-watch"
+description = "Enables the stop_folder_watch command without any pre-configured scope."
+commands.allow = ["stop_folder_watch"]
+
+[[permission]]
+identifier = "deny-stop-folder-watch"
+description = "Denies the stop_folder_watch command without any pre-configured scope."
+commands.deny = ["stop_folder_watch"]

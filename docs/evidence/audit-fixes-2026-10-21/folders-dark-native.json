@@ -1,0 +1,409 @@
+{
+  "viewport": {
+    "width": 1400,
+    "height": 900
+  },
+  "theme": "dark",
+  "pageScrollWidth": 1400,
+  "toolbar": [
+    {
+      "text": "Files",
+      "disabled": false,
+      "x": 54,
+      "y": 5,
+      "width": 62,
+      "height": 44,
+      "right": 116,
+      "bottom": 49
+    },
+    {
+      "text": "Folders",
+      "disabled": false,
+      "x": 118,
+      "y": 5,
+      "width": 62,
+      "height": 44,
+      "right": 180,
+      "bottom": 49
+    },
+    {
+      "text": "All",
+      "disabled": false,
+      "x": 189,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 236,
+      "bottom": 50
+    },
+    {
+      "text": "Diffs",
+      "disabled": false,
+      "x": 238,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 285,
+      "bottom": 50
+    },
+    {
+      "text": "Same",
+      "disabled": false,
+      "x": 287,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 334,
+      "bottom": 50
+    },
+    {
+      "text": "Structure",
+      "disabled": false,
+      "x": 336,
+      "y": 4,
+      "width": 62.6875,
+      "height": 46,
+      "right": 398.6875,
+      "bottom": 50
+    },
+    {
+      "text": "Minor",
+      "disabled": false,
+      "x": 400.6875,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 447.6875,
+      "bottom": 50
+    },
+    {
+      "text": "Rules",
+      "disabled": false,
+      "x": 449.6875,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 496.6875,
+      "bottom": 50
+    },
+    {
+      "text": "Copy",
+      "disabled": false,
+      "x": 498.6875,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 545.6875,
+      "bottom": 50
+    },
+    {
+      "text": "Expand",
+      "disabled": false,
+      "x": 547.6875,
+      "y": 4,
+      "width": 54.703125,
+      "height": 46,
+      "right": 602.390625,
+      "bottom": 50
+    },
+    {
+      "text": "Collapse",
+      "disabled": false,
+      "x": 604.390625,
+      "y": 4,
+      "width": 60.6953125,
+      "height": 46,
+      "right": 665.0859375,
+      "bottom": 50
+    },
+    {
+      "text": "Select",
+      "disabled": false,
+      "x": 667.0859375,
+      "y": 4,
+      "width": 47.3515625,
+      "height": 46,
+      "right": 714.4375,
+      "bottom": 50
+    },
+    {
+      "text": "Files",
+      "disabled": false,
+      "x": 716.4375,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 763.4375,
+      "bottom": 50
+    },
+    {
+      "text": "Refresh",
+      "disabled": false,
+      "x": 765.4375,
+      "y": 4,
+      "width": 56.0234375,
+      "height": 46,
+      "right": 821.4609375,
+      "bottom": 50
+    },
+    {
+      "text": "Watch",
+      "disabled": false,
+      "x": 823.4609375,
+      "y": 4,
+      "width": 47.5625,
+      "height": 46,
+      "right": 871.0234375,
+      "bottom": 50
+    },
+    {
+      "text": "History",
+      "disabled": false,
+      "x": 873.0234375,
+      "y": 4,
+      "width": 51.3359375,
+      "height": 46,
+      "right": 924.359375,
+      "bottom": 50
+    },
+    {
+      "text": "Swap",
+      "disabled": false,
+      "x": 926.359375,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 973.359375,
+      "bottom": 50
+    },
+    {
+      "text": "Stop",
+      "disabled": true,
+      "x": 975.359375,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 1022.359375,
+      "bottom": 50
+    },
+    {
+      "text": "Filters",
+      "disabled": false,
+      "x": 1024.359375,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 1071.359375,
+      "bottom": 50
+    },
+    {
+      "text": "Peek",
+      "disabled": false,
+      "x": 1073.359375,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 1120.359375,
+      "bottom": 50
+    },
+    {
+      "text": "Log",
+      "disabled": false,
+      "x": 1122.359375,
+      "y": 4,
+      "width": 47,
+      "height": 46,
+      "right": 1169.359375,
+      "bottom": 50
+    },
+    {
+      "text": "Dark",
+      "disabled": false,
+      "x": 1338,
+      "y": 4,
+      "width": 56,
+      "height": 46,
+      "right": 1394,
+      "bottom": 50
+    }
+  ],
+  "unnamedSelects": [],
+  "status": [
+    {
+      "id": "statusbar",
+      "text": "\n      6 files · 1 folders\n      0 errors · 0 skipped\n      \n    ",
+      "role": null,
+      "live": null
+    },
+    {
+      "id": "st-diffs",
+      "text": "6 files · 1 folders",
+      "role": null,
+      "live": null
+    },
+    {
+      "id": "st-msg",
+      "text": "",
+      "role": "status",
+      "live": "polite"
+    }
+  ],
+  "separators": [
+    {
+      "label": "Resize left name",
+      "tabIndex": 0,
+      "orientation": "vertical",
+      "value": "439",
+      "x": 433,
+      "y": 117.75,
+      "width": 6,
+      "height": 22.5,
+      "right": 439,
+      "bottom": 140.25
+    },
+    {
+      "label": "Resize left size",
+      "tabIndex": 0,
+      "orientation": "vertical",
+      "value": "88",
+      "x": 521,
+      "y": 118,
+      "width": 6,
+      "height": 22,
+      "right": 527,
+      "bottom": 140
+    },
+    {
+      "label": "Resize left modified",
+      "tabIndex": 0,
+      "orientation": "vertical",
+      "value": "156",
+      "x": 677,
+      "y": 118,
+      "width": 6,
+      "height": 22,
+      "right": 683,
+      "bottom": 140
+    },
+    {
+      "label": "Resize comparison panes",
+      "tabIndex": 0,
+      "orientation": "vertical",
+      "value": "50",
+      "x": 684,
+      "y": 117,
+      "width": 32,
+      "height": 24,
+      "right": 716,
+      "bottom": 141
+    },
+    {
+      "label": "Resize right name",
+      "tabIndex": 0,
+      "orientation": "vertical",
+      "value": "439",
+      "x": 1149,
+      "y": 118,
+      "width": 6,
+      "height": 22,
+      "right": 1155,
+      "bottom": 140
+    },
+    {
+      "label": "Resize right size",
+      "tabIndex": 0,
+      "orientation": "vertical",
+      "value": "88",
+      "x": 1237,
+      "y": 118,
+      "width": 6,
+      "height": 22,
+      "right": 1243,
+      "bottom": 140
+    },
+    {
+      "label": "Resize right modified",
+      "tabIndex": 0,
+      "orientation": "vertical",
+      "value": "156",
+      "x": 1393,
+      "y": 118,
+      "width": 6,
+      "height": 22,
+      "right": 1399,
+      "bottom": 140
+    },
+    {
+      "label": "Resize log",
+      "tabIndex": 0,
+      "orientation": "horizontal",
+      "value": "90",
+      "x": 0,
+      "y": 738.6015625,
+      "width": 1400,
+      "height": 5,
+      "right": 1400,
+      "bottom": 743.6015625
+    }
+  ],
+  "grid": {
+    "colcount": "7",
+    "rowcount": "8",
+    "firstRowCells": 7,
+    "headerCells": 7,
+    "renderedRows": 7,
+    "selection": "7 total · 7 shown · 1 selected · Left 47 B / Right 49 B"
+  },
+  "resources": [
+    {
+      "name": "index-BcGxk5dT.js",
+      "duration": 39.80000001192093,
+      "decodedBodySize": 4086420
+    },
+    {
+      "name": "index-C1KJ9XC8.css",
+      "duration": 10.399999976158142,
+      "decodedBodySize": 206081
+    },
+    {
+      "name": "O_compare_toolbar-BxxKaWNJ.png",
+      "duration": 1,
+      "decodedBodySize": 15773
+    },
+    {
+      "name": "editor.worker-BmdWdrHZ.js",
+      "duration": -5.099999964237213,
+      "decodedBodySize": 303777
+    },
+    {
+      "name": "sql-NEE52Syq.js",
+      "duration": 1.199999988079071,
+      "decodedBodySize": 8840
+    },
+    {
+      "name": "regexDiff.worker-CAjArUze.js",
+      "duration": -3.100000023841858,
+      "decodedBodySize": 106503
+    },
+    {
+      "name": "codicon-DF1abBS2.ttf",
+      "duration": 3.099999964237213,
+      "decodedBodySize": 153228
+    },
+    {
+      "name": "regexDiff.worker-CAjArUze.js",
+      "duration": -3.899999976158142,
+      "decodedBodySize": 106503
+    }
+  ],
+  "logo": {
+    "naturalWidth": 128,
+    "naturalHeight": 128,
+    "x": 10,
+    "y": 11,
+    "width": 32,
+    "height": 32,
+    "right": 42,
+    "bottom": 43
+  }
+}

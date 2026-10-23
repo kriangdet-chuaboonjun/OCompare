@@ -1,0 +1,29 @@
+{
+  "version": "0.4.1",
+  "artifacts": [
+    {
+      "name": "O_Compare-0.4.1-portable.exe",
+      "bytes": 14228992,
+      "sha256": "280fa70b40b41ee583512c301a47a573d122d58e5f85bb9bb3597390106fded3"
+    },
+    {
+      "name": "O_Compare-0.4.1-x64-setup.exe",
+      "bytes": 5805838,
+      "sha256": "9c883e95f096a1f830a54616a8d96a952240f37f7b9dec6f7d2c5ebbe21f9cb8"
+    }
+  ],
+  "smoke": {
+    "title": "O_Compare v0.4.1",
+    "paths": [
+      "E:\\Project_local\\O_Compare_Rust\\samples\\left.sql",
+      "E:\\Project_local\\O_Compare_Rust\\samples\\right.sql"
+    ],
+    "diff": "5 difference section(s)",
+    "logoSize": 128
+  },
+  "sampleHashes": [
+    "b7b135ea4997b1dd90cb82a1244aead9971e8ae22a9c106fc757510256bdca88",
+    "257ffba3068b402ae971a066298b59947a641a91a90a09604fea42c255ac6e68"
+  ],
+  "samplesUnchanged": true
+}

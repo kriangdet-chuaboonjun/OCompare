@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-validate-comparison-rules"
+description = "Enables the validate_comparison_rules command without any pre-configured scope."
+commands.allow = ["validate_comparison_rules"]
+
+[[permission]]
+identifier = "deny-validate-comparison-rules"
+description = "Denies the validate_comparison_rules command without any pre-configured scope."
+commands.deny = ["validate_comparison_rules"]

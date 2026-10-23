@@ -1,0 +1,115 @@
+FAIL A02 distinct accessible names for both file sides: Expected values to be strictly equal:
+
+0 !== 1
+
+FAIL A03 file errors reach a live region without moving focus: File error must be exposed as a live message
+FAIL A04 commands and both path fields remain reachable in compact windows: 900px clipped controls
++ actual - expected
+
++ [
++   '💾'
++ ]
+- []
+
+FAIL A07 arrow keys move tab focus and Ctrl+Tab still cycles: Expected values to be strictly equal:
++ actual - expected
+
++ 'Untitled ↔ Untitled'
+- 'changed.sql ↔ changed.sql'
+
+FAIL A08 toolbar uses a small bitmap while preserving displayed size: Oversized logo: 1254×1254
+FAIL A01 SQL token contrast survives diff and character backgrounds in both themes: SQL tokens must stay readable on changed lines and characters
++ actual - expected
+
++ [
++   {
++     ratio: 3.113597416071602,
++     text: '-- left',
++     theme: 'light'
++   },
++   {
++     ratio: 2.7895140824355735,
++     text: '1',
++     theme: 'light'
++   },
++   {
++     ratio: 2.4233348002438997,
++     text: "N'left'",
++     theme: 'light'
++   },
++   {
++     ratio: 3.113597416071602,
++     text: '-- right',
++     theme: 'light'
++   },
++   {
++     ratio: 2.7895140824355735,
++     text: '2',
++     theme: 'light'
++   },
++   {
++     ratio: 2.4233348002438997,
++     text: "N'right'",
++     theme: 'light'
++   },
++   {
++     ratio: 2.242500920239175,
++     text: '-- left',
++     theme: 'dark'
++   },
++   {
++     ratio: 2.242500920239175,
++     text: '-- right',
++     theme: 'dark'
++   }
++ ]
+- []
+
+FAIL A05 seven column headers map to seven ordered row cells: Expected values to be strictly equal:
+
+6 !== 7
+
+FAIL A06 column resize supports keyboard and splitters expose changing values: Expected values to be strictly equal:
++ actual - expected
+
++ null
+- 'separator'
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Accessibility regressions
++ actual - expected
+
++ [
++   'A02 distinct accessible names for both file sides',
++   'A03 file errors reach a live region without moving focus',
++   'A04 commands and both path fields remain reachable in compact windows',
++   'A07 arrow keys move tab focus and Ctrl+Tab still cycles',
++   'A08 toolbar uses a small bitmap while preserving displayed size',
++   'A01 SQL token contrast survives diff and character backgrounds in both themes',
++   'A05 seven column headers map to seven ordered row cells',
++   'A06 column resize supports keyboard and splitters expose changing values'
++ ]
+- []
+
+    at file:///E:/Project_local/O_Compare_Rust/scripts/test-accessibility.mjs:133:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [
+    'A02 distinct accessible names for both file sides',
+    'A03 file errors reach a live region without moving focus',
+    'A04 commands and both path fields remain reachable in compact windows',
+    'A07 arrow keys move tab focus and Ctrl+Tab still cycles',
+    'A08 toolbar uses a small bitmap while preserving displayed size',
+    'A01 SQL token contrast survives diff and character backgrounds in both themes',
+    'A05 seven column headers map to seven ordered row cells',
+    'A06 column resize supports keyboard and splitters expose changing values'
+  ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

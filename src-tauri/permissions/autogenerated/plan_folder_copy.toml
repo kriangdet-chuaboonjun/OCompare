@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-plan-folder-copy"
+description = "Enables the plan_folder_copy command without any pre-configured scope."
+commands.allow = ["plan_folder_copy"]
+
+[[permission]]
+identifier = "deny-plan-folder-copy"
+description = "Denies the plan_folder_copy command without any pre-configured scope."
+commands.deny = ["plan_folder_copy"]

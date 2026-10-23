@@ -1,0 +1,47 @@
+PASS A02 distinct accessible names for both file sides
+PASS A03 file errors reach a live region without moving focus
+PASS A04 commands and both path fields remain reachable in compact windows
+PASS A07 arrow keys move tab focus and Ctrl+Tab still cycles
+PASS A08 toolbar uses a small bitmap while preserving displayed size
+PASS A01 SQL token contrast survives diff and character backgrounds in both themes
+FAIL A01 selected folder status text stays readable in both themes: Selected status text must meet contrast in both themes
++ actual - expected
+
++ [
++   {
++     ratio: 4.167837714668457,
++     status: 'folder-row status-different selected focused',
++     theme: 'light'
++   },
++   {
++     ratio: 4.327226644118972,
++     status: 'folder-row status-right-only selected focused',
++     theme: 'light'
++   }
++ ]
+- []
+
+PASS A05 seven column headers map to seven ordered row cells
+PASS A06 column resize supports keyboard and splitters expose changing values
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Accessibility regressions
++ actual - expected
+
++ [
++   'A01 selected folder status text stays readable in both themes'
++ ]
+- []
+
+    at file:///E:/Project_local/O_Compare_Rust/scripts/test-accessibility.mjs:152:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [ 'A01 selected folder status text stays readable in both themes' ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
