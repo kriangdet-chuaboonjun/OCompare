@@ -71,6 +71,30 @@ try {
   assert.equal(await page.evaluate(() => window.regexTest.dialogResult),'pending')
   await page.getByRole('button',{name:'Cancel',exact:true}).click()
   assert.equal(await page.evaluate(() => window.regexTest.dialogResult),null)
+  // Removing a row must keep keyboard users inside the remaining rule controls.
+  await page.evaluate(() => {
+    const t = window.regexTest
+    t.openComparisonRules({
+      rules: ['first', 'middle', 'last'].map(id => ({ id, pattern: id, enabled: true })),
+      validate: rules => t.normalizePair('', '', rules), normalizePair: t.normalizePair,
+    })
+  })
+  const removeRule = async index => {
+    await page.getByRole('button', { name: 'Remove', exact: true }).nth(index).focus()
+    await page.keyboard.press('Enter')
+  }
+  const focusedPattern = () => page.evaluate(() => ({
+    name: document.activeElement.getAttribute('aria-label'), value: document.activeElement.value,
+  }))
+  await removeRule(1)
+  assert.deepEqual(await focusedPattern(), { name: 'Rule 2 pattern', value: 'last' }, 'Middle removal focuses the next rule')
+  await removeRule(1)
+  assert.deepEqual(await focusedPattern(), { name: 'Rule 1 pattern', value: 'first' }, 'Last removal focuses the previous rule')
+  await removeRule(0)
+  assert(await page.getByRole('button', { name: 'Add rule', exact: true }).evaluate(el => el === document.activeElement), 'Empty list focuses Add rule')
+  await page.keyboard.press('Enter')
+  assert.deepEqual(await focusedPattern(), { name: 'Rule 1 pattern', value: '' }, 'Add rule still focuses its new pattern')
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
   assert.deepEqual(errors,[])
   console.log('Rust engine + Monaco worker/provider, Unicode mapping, edits, cancellation, and invalid dialog Apply passed')
 } finally { await browser?.close(); await server.close() }

@@ -133,6 +133,22 @@ try {
     const indexes = await page.locator('.folder-row').first().getByRole('gridcell').evaluateAll(els => els.map(el => Number(el.getAttribute('aria-colindex'))))
     assert.deepEqual(indexes, [1,2,3,4,5,6,7])
   })
+  await check('Folder sort retains keyboard focus for every column and direction', async () => {
+    for (const side of ['left', 'right']) {
+      for (const column of ['name', 'size', 'modified']) {
+        const button = page.getByRole('button', { name: `Sort ${side} ${column}`, exact: true })
+        await button.focus()
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const direction = await button.locator('..').getAttribute('aria-sort') === 'ascending' ? 'descending' : 'ascending'
+          await page.keyboard.press('Enter')
+          assert(await button.evaluate(el => el === document.activeElement), `${side} ${column} ${direction} must retain focus`)
+          assert.equal(await button.locator('..').getAttribute('aria-sort'), direction)
+        }
+        await page.keyboard.press('Tab')
+        assert(await page.getByRole('separator', { name: `Resize ${side} ${column}`, exact: true }).evaluate(el => el === document.activeElement), 'Tab must reach the adjacent resize control')
+      }
+    }
+  })
   await check('A06 column resize supports keyboard and splitters expose changing values', async () => {
     const handle = page.locator('[title="Resize left size"]')
     assert.equal(await handle.getAttribute('role'), 'separator')

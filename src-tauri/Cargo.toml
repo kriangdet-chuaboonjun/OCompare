@@ -1,6 +1,6 @@
 [package]
 name = "o-compare-rust"
-version = "0.4.3"
+version = "0.4.4"
 edition = "2021"
 description = "Side-by-side text compare"
 license = "LicenseRef-Proprietary"

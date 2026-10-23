@@ -260,12 +260,16 @@ export class FolderView {
         const b = actionButton(
           `${key === 'name' ? 'Name' : key === 'size' ? 'Size' : 'Modified'}${this.options.sort === key && this.options.sortSide === side ? (this.options.descending ? ' ▾' : ' ▴') : ''}`,
           () => {
+            const hadFocus = document.activeElement === b
             this.options.descending =
               this.options.sort === key && this.options.sortSide === side ? !this.options.descending : false
             this.options.sort = key
             this.options.sortSide = side
             this.headers()
             this.updateRows()
+            // Rebuilding the headers removes the button that initiated the sort.
+            if (hadFocus)
+              this.host.querySelector<HTMLButtonElement>(`button[aria-label="Sort ${side} ${key}"]`)?.focus()
             this.actions.viewChanged()
           },
         )
@@ -777,6 +781,8 @@ export class FolderView {
     else this.actions.open(entry)
   }
   private onKey(e: KeyboardEvent): void {
+    // Header buttons and separators handle their own keys, independently of row navigation.
+    if (e.target instanceof Element && e.target.closest('.folder-grid-header')) return
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
       e.preventDefault()
       this.selectAll()

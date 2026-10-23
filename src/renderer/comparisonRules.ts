@@ -51,7 +51,13 @@ export function openComparisonRules(options: ComparisonRulesDialogOptions): Prom
           rule.pattern = pattern.value; revision++; errors.delete(rule.id)
           error.textContent = ''; pattern.setAttribute('aria-invalid', 'false')
         }
-        const remove = button('Remove', () => { rules.splice(index, 1); revision++; draw() })
+        const remove = button('Remove', () => {
+          rules.splice(index, 1); revision++; draw()
+          // Redrawing removes the focused button; continue at the nearest remaining rule.
+          const nextRow = rows.children[Math.min(index, rules.length - 1)]
+          const nextPattern = nextRow?.querySelector<HTMLInputElement>('input[type=text]')
+          ;(nextPattern ?? add).focus()
+        })
         row.append(toggle, pattern, remove, error); rows.append(row)
       }
       add.disabled = busy || rules.length >= 20

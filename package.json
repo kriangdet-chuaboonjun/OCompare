@@ -1,7 +1,7 @@
 {
   "name": "o-compare-rust",
   "productName": "OCompare",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "private": true,
   "type": "module",
   "description": "Side-by-side text compare using Tauri, Rust and Monaco",
