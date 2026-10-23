@@ -1,9 +1,0 @@
-{
-    "legacyVersion":  "0.3.3",
-    "newVersion":  "0.3.4",
-    "downgradeBlocked":  true,
-    "migrationPassed":  true,
-    "dataPreserved":  true,
-    "unrelatedFilePreserved":  true,
-    "noLegacyInstallPassed":  true
-}

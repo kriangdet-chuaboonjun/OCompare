@@ -11,3 +11,8 @@ packaging/windows/generated/
 src-tauri/explorer/
 docs/evidence/*
 /docs/evidence
+# Local validation reports and generated test output
+/docs/VALIDATION*.md
+/docs/AUDIT-*.md
+playwright-report/
+coverage/
