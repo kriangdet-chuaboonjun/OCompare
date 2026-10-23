@@ -10,3 +10,4 @@ native/build/
 packaging/windows/generated/
 src-tauri/explorer/
 docs/evidence/*
+/docs/evidence
