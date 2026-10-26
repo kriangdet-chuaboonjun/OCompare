@@ -15,3 +15,9 @@
 .unsaved-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:24px; }
 .unsaved-actions button { background:var(--chrome); color:var(--text); border:1px solid var(--border); padding:6px 18px; border-radius:3px; cursor:pointer; }
 .unsaved-actions button:last-child { background:var(--accent); color:var(--on-accent); }
+/* #folder-panel button styles outrank .file-tab button, so the Folder strip restates the tab look. */
+#folder-tabs .file-tab button { border:0; border-radius:0; background:transparent; padding:0; }
+#folder-tabs .file-tab button.file-tab-label { padding:4px 10px; }
+#folder-tabs .file-tab button.file-tab-close { padding:3px 8px; }
+#folder-tabs .file-tab button:hover, #folder-tabs #folder-tab-add:hover { background:var(--hover); }
+#folder-tabs #folder-tab-add { border:0; border-radius:0; background:transparent; padding:0; font-size:20px; }

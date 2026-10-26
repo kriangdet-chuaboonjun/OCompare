@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.4.9] - 2026-10-26
+
+- Fix the Folder tab strip so the close button stays attached to its tab and the tabs look like the Files tabs.
+
 ## [0.4.8] - 2026-10-26
 
 - Add direct folder selection and comparison in the Windows 11 Explorer context menu.
