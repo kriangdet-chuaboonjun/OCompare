@@ -45,6 +45,8 @@ pub fn run() {
             commands::restore_backup,
             commands::get_startup_files,
             commands::get_startup_comparison,
+            commands::is_portable,
+            commands::open_release_page,
             commands::compare_folders,
             commands::cancel_folder_compare,
             commands::load_folder_sessions,

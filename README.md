@@ -4,9 +4,9 @@ Windows application for comparing and editing text files and comparing folders s
 
 ## Online updates
 
-OCompare 0.4.5 and later check for stable updates on startup. Use **Check for updates** in the toolbar to check manually. The application only downloads or installs after you choose **Download and install**. Release notes, progress, and retry controls are shown in the application.
+OCompare 0.4.5 and later check for stable updates on startup. Use **Check for updates** in the toolbar to check manually. When an update is found, the toolbar shows **Install update x.y.z**; one click downloads and installs it. Nothing is downloaded or installed before you click. Release notes, progress, and retry controls are shown in the application.
 
-Installation uses Windows Setup and may request administrator permission. Unsaved documents must be saved or explicitly discarded; Cancel or a failed save postpones installation. Stop folder jobs before installing. A portable copy uses the same Setup to install OCompare into Windows rather than replacing the portable executable.
+Installation uses Windows Setup and may request administrator permission. Unsaved documents must be saved or explicitly discarded; Cancel or a failed save postpones installation. Stop folder jobs before installing. A portable copy is never installed into Windows: it shows **Get version x.y.z**, which opens the GitHub release page so you can download the new portable executable.
 
 Versions through 0.4.4 require a one-time manual installation of 0.4.5 or later. Update downloads have a mandatory updater signature; Windows Authenticode signing is not currently configured and Windows may show its usual publisher warning.
 

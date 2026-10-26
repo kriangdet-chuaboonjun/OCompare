@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core'
 import type { UpdaterApi } from '../shared/updater'
 
 /** The plugin validates HTTPS metadata and verifies the signature before returning a download. */
@@ -13,4 +14,6 @@ export const updaterApi: UpdaterApi = {
       close: () => update.close(),
     }
   },
+  portable: () => invoke<boolean>('is_portable'),
+  openDownloadPage: () => invoke('open_release_page'),
 }

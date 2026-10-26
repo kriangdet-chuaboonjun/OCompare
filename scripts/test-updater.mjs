@@ -21,6 +21,8 @@ function fixture(options = {}) {
   }
   const controller = new UpdateController('0.4.5', {
     async check() { checks++; if (options.checkError) throw new Error(options.checkError); return options.none ? null : update },
+    async portable() { return !!options.portable },
+    async openDownloadPage() { events.push('open page') },
   }, {
     async prepare() { events.push('prepare'); await options.prepare?.(); return options.allowed !== false },
     release() { events.push('unlock') },
@@ -69,6 +71,11 @@ test('download signature/network failure never prepares or closes the workspace'
   await f.controller.check(true); await f.controller.install()
   assert.equal(f.controller.state.phase, 'error'); assert.equal(f.counts().installs, 0)
   assert.deepEqual(f.events, ['download']); assert.match(f.controller.state.message, /signature/)
+})
+test('a portable copy opens the download page and never downloads, locks or runs Setup', async () => {
+  const f = fixture({ portable: true }); await f.controller.check(true)
+  assert.equal(f.controller.state.portable, true); await f.controller.install()
+  assert.deepEqual(f.events, ['open page']); assert.equal(f.counts().downloads, 0); assert.equal(f.counts().installs, 0)
 })
 test('installation errors release workspace lock and allow retry', async () => {
   const f = fixture({ installError: 'UAC declined' }); await f.controller.check(true); await f.controller.install()

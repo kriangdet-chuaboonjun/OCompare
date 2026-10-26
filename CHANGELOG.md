@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- The toolbar's **Install update x.y.z** button downloads and installs in one click.
+- Portable copies no longer install OCompare into Windows; **Get version x.y.z** opens the release download page instead.
+- Shorter update notice in the update dialog.
+
 ## [0.4.5] - 2026-10-26
 
 - Check for stable updates on startup or with the toolbar's Check for updates button.

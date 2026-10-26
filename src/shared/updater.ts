@@ -11,7 +11,12 @@ export interface AppUpdate {
   install(): Promise<void>
   close(): Promise<void>
 }
-export interface UpdaterApi { check(): Promise<AppUpdate | null> }
+export interface UpdaterApi {
+  check(): Promise<AppUpdate | null>
+  /** A portable copy is replaced by downloading a new copy, never by running Setup. */
+  portable?(): Promise<boolean>
+  openDownloadPage?(): Promise<unknown>
+}
 export interface InstallGuard {
   prepare(): Promise<boolean>
   release(): void
@@ -25,6 +30,7 @@ export interface UpdateState {
   downloaded: number
   total?: number
   canInstall: boolean
+  portable: boolean
 }
 
 function stableVersion(version: string): number[] | null {
@@ -35,7 +41,7 @@ function stableVersion(version: string): number[] | null {
 
 /** Owns update state without coupling the UI to network, IPC, or process exit. */
 export class UpdateController {
-  state: UpdateState = { phase: 'idle', visible: false, version: '', notes: '', message: '', downloaded: 0, canInstall: false }
+  state: UpdateState = { phase: 'idle', visible: false, version: '', notes: '', message: '', downloaded: 0, canInstall: false, portable: false }
   private update: AppUpdate | null = null
   private downloaded = false
   private working = false
@@ -70,7 +76,8 @@ export class UpdateController {
         return
       }
       this.update = update
-      this.publish({ phase: 'available', version: update.version, notes: update.body ?? '', canInstall: true, message: 'An update is available.' })
+      const portable = await this.api.portable?.() ?? false
+      this.publish({ phase: 'available', version: update.version, notes: update.body ?? '', canInstall: true, portable, message: portable ? 'An update is available. Download the new portable copy to replace this one.' : 'An update is available.' })
     } catch (error) {
       this.publish({ phase: 'error', message: `Could not check for updates: ${errorText(error)}` })
     } finally { this.working = false }
@@ -81,6 +88,11 @@ export class UpdateController {
     this.working = true
     let guarded = false
     try {
+      if (this.state.portable) {
+        await this.api.openDownloadPage?.()
+        this.publish({ message: 'The download page opened in your browser. Replace this portable copy with the new one.' })
+        return
+      }
       if (!this.downloaded) {
         this.publish({ phase: 'downloading', message: 'Downloading update…', canInstall: false, downloaded: 0, total: undefined })
         await this.update.download(event => {

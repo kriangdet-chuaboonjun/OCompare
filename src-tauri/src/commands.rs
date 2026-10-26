@@ -315,6 +315,22 @@ pub async fn restore_backup(
     blocking(move || writes.with_store(|store| store.restore(Path::new(&path), &id))).await
 }
 
+/// Setup places uninstall.exe beside the app; a portable copy must not run Setup to update.
+#[tauri::command]
+pub fn is_portable() -> bool {
+    std::env::current_exe().map_or(true, |exe| !exe.with_file_name("uninstall.exe").is_file())
+}
+
+/// The URL is fixed here so the renderer cannot open arbitrary targets.
+#[tauri::command]
+pub fn open_release_page() -> Result<(), AppError> {
+    std::process::Command::new("explorer.exe")
+        .arg("https://github.com/kriangdet-chuaboonjun/OCompare/releases/latest")
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| AppError::new("OPEN", e, None))
+}
+
 #[tauri::command]
 pub fn get_startup_comparison() -> Result<Option<crate::startup::StartupComparison>, AppError> {
     crate::startup::parse_paths(std::env::args_os().skip(1))

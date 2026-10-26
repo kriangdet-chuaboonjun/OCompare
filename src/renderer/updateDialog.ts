@@ -11,7 +11,6 @@ export function mountUpdater(currentVersion: string, api: UpdaterApi, guard: Ins
   const versions = document.createElement('p')
   const notes = document.createElement('pre'); notes.className = 'update-notes'
   const notice = document.createElement('p'); notice.className = 'update-notice'
-  notice.textContent = 'Updates use Windows Setup and may request administrator permission. If you are running a portable copy, this installs OCompare into Windows. Save your work before installation; OCompare will close and reopen.'
   const message = document.createElement('p'); message.setAttribute('role', 'status'); message.setAttribute('aria-live', 'polite')
   const progress = document.createElement('progress'); progress.setAttribute('aria-label', 'Update download progress')
   const actions = document.createElement('div'); actions.className = 'update-actions'
@@ -30,11 +29,14 @@ export function mountUpdater(currentVersion: string, api: UpdaterApi, guard: Ins
     progress.hidden = state.phase !== 'downloading'
     if (state.total && state.total > 0) { progress.max = state.total; progress.value = state.downloaded }
     else progress.removeAttribute('value')
+    notice.textContent = state.portable
+      ? 'This is a portable copy, so it is not changed. Your browser opens the download page for the new version.'
+      : 'Windows may ask for administrator permission. OCompare will close and reopen.'
     badge.hidden = !state.version
-    badge.textContent = state.version ? `Update ${state.version} available` : 'Update available'
+    badge.textContent = state.portable ? `Get version ${state.version}` : `Install update ${state.version}`
     close.disabled = busy; check.disabled = busy; install.disabled = busy
     install.hidden = !state.canInstall && !['downloading', 'preparing', 'installing'].includes(state.phase)
-    install.textContent = state.phase === 'ready' ? 'Install update' : state.phase === 'error' ? 'Retry update' : 'Download and install'
+    install.textContent = state.portable ? 'Open download page' : state.phase === 'ready' ? 'Install update' : state.phase === 'error' ? 'Retry update' : 'Download and install'
     button.disabled = busy
     if (state.visible && !dialog.open) { dialog.showModal(); close.focus() }
     if (!state.visible && dialog.open) dialog.close()
@@ -44,7 +46,8 @@ export function mountUpdater(currentVersion: string, api: UpdaterApi, guard: Ins
   check.addEventListener('click', () => { void controller.check(true) })
   install.addEventListener('click', () => { void controller.install() })
   button.addEventListener('click', () => { void controller.check(true) })
-  badge.addEventListener('click', () => controller.show())
+  // The badge names the action, so one click starts it; the dialog shows notes and progress.
+  badge.addEventListener('click', () => { controller.show(); void controller.install() })
   render(controller.state)
   return controller
 }
