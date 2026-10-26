@@ -1,0 +1,4 @@
+interface:
+  display_name: "OCompare Release + Publish"
+  short_description: "Build signed OCompare releases and publish to GitHub"
+  default_prompt: "Use $release-publish to prepare, verify, and publish the next OCompare Windows release."
