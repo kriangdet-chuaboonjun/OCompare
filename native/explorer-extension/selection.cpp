@@ -21,6 +21,16 @@ HRESULT WriteValue(const wchar_t* name,const std::wstring& value,const wchar_t* 
 }
 HRESULT ReadLeftPath(std::wstring& path){return ReadValue(L"LeftPath",path);}
 HRESULT WriteLeftPath(const std::wstring& path){return WriteValue(L"LeftPath",path);}
+HRESULT ReadLeftFolder(std::wstring& path){return ReadValue(L"LeftFolderPath",path);}
+HRESULT WriteLeftFolder(const std::wstring& path){return WriteValue(L"LeftFolderPath",path);}
+HRESULT ClearLeftFolder(){
+  HKEY handle=nullptr;
+  auto result=RegOpenKeyExW(HKEY_CURRENT_USER,RegistryKey,0,KEY_SET_VALUE,&handle);
+  if(result==ERROR_FILE_NOT_FOUND)return S_OK;
+  if(result!=ERROR_SUCCESS)return HRESULT_FROM_WIN32(result);
+  result=RegDeleteValueW(handle,L"LeftFolderPath");RegCloseKey(handle);
+  return result==ERROR_FILE_NOT_FOUND?S_OK:HRESULT_FROM_WIN32(result);
+}
 std::wstring EscapeMenuText(const std::wstring& value){
   std::wstring out;
   for(auto c:value){if(c<32)out+=L' ';else{out+=c;if(c==L'&')out+=L'&';}}

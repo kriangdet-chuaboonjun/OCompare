@@ -46,8 +46,8 @@ export interface FolderProgress {
   visited: number
 }
 export interface FolderApi {
-  watchFolders?(leftPath: string, rightPath: string): Promise<number>
-  stopWatching?(): Promise<void>
+  watchFolders?(tabId: string, leftPath: string, rightPath: string): Promise<number>
+  stopWatching?(tabId: string): Promise<void>
   onChanged?(callback: (event: FolderWatchEvent) => void): Promise<() => void>
   openDirectory(): Promise<string | null>
   compare(
@@ -67,6 +67,7 @@ export interface FolderApi {
     direction: Side,
     paths: string[],
     requestId: string,
+    ignoredFolders?: string[],
   ): Promise<CopyPlan>
   executeCopy(planId: string, requestId: string): Promise<CopyReport>
   discardCopy(planId: string): Promise<void>
@@ -78,8 +79,10 @@ export interface FolderCompareOptions {
   ignoreWhitespace: boolean
   ignoreEol: boolean
   regexRules?: import('./comparisonRules').RegexRule[]
+  /** Root-relative folder paths such as `src/generated`; absent in sessions saved before Ignore folder. */
+  ignoredFolders?: string[]
 }
-export interface FolderWatchEvent { generation: number; error?: string | null }
+export interface FolderWatchEvent { tabId: string; generation: number; error?: string | null }
 export interface FolderViewOptions {
   include: string
   exclude: string

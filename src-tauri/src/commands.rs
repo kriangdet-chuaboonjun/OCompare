@@ -113,20 +113,22 @@ pub async fn plan_folder_copy(
     right_path: String,
     direction: String,
     paths: Vec<String>,
+    ignored_folders: Option<Vec<String>>,
     request_id: String,
     jobs: State<'_, Arc<FolderJobs>>,
     service: State<'_, Arc<crate::folder_copy::CopyService>>,
 ) -> Result<crate::folder_copy::CopyPlan, AppError> {
     let jobs = jobs.inner().clone();
     let service = service.inner().clone();
-    let cancel = jobs.begin(&request_id)?;
+    let cancel = jobs.begin_copy(&request_id)?;
     let id = request_id.clone();
     let result = blocking(move || {
-        service.plan(
+        service.plan_with_ignored(
             Path::new(&left_path),
             Path::new(&right_path),
             &direction,
             &paths,
+            &ignored_folders.unwrap_or_default(),
             &cancel,
         )
     })
@@ -146,7 +148,7 @@ pub async fn execute_folder_copy(
     let jobs = jobs.inner().clone();
     let service = service.inner().clone();
     let writes = writes.inner().clone();
-    let cancel = jobs.begin(&request_id)?;
+    let cancel = jobs.begin_copy(&request_id)?;
     let id = request_id.clone();
     let result=blocking(move||{
         let mut last=std::time::Instant::now()-std::time::Duration::from_secs(1);
@@ -223,6 +225,7 @@ pub async fn watch_file(
 
 #[tauri::command]
 pub async fn watch_folders(
+    tab_id: String,
     left_path: String,
     right_path: String,
     app: tauri::AppHandle,
@@ -231,6 +234,7 @@ pub async fn watch_folders(
     let service = service.inner().clone();
     blocking(move || {
         service.watch(
+            &tab_id,
             vec![PathBuf::from(left_path), PathBuf::from(right_path)],
             Arc::new(move |event| {
                 if let Err(error) = app.emit_to("main", "folder:changed", event) {
@@ -244,9 +248,10 @@ pub async fn watch_folders(
 
 #[tauri::command]
 pub fn stop_folder_watch(
+    tab_id: String,
     service: State<'_, Arc<crate::folder_watch::FolderWatchService>>,
 ) -> Result<(), AppError> {
-    service.stop()
+    service.stop(&tab_id)
 }
 
 #[tauri::command]

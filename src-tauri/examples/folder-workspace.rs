@@ -112,6 +112,7 @@ fn run(
         "watchFolders" => {
             let events = events.clone();
             let generation = watch.watch(
+                string(v, "tabId")?,
                 vec![
                     string(v, "leftPath")?.into(),
                     string(v, "rightPath")?.into(),
@@ -130,7 +131,7 @@ fn run(
             .drain(..)
             .collect::<Vec<_>>())),
         "stopWatch" => {
-            watch.stop()?;
+            watch.stop(string(v, "tabId")?)?;
             Ok(Value::Null)
         }
         "loadSessions" => folder_sessions::load(sessions),
@@ -151,7 +152,7 @@ fn run(
         }
         "compare" | "planCopy" | "executeCopy" => {
             let id = string(v, "requestId")?;
-            let cancel = jobs.begin(id)?;
+            let cancel = if action == "compare" { jobs.begin(id)? } else { jobs.begin_copy(id)? };
             let result = (|| match action {
                 "compare" => {
                     let options: FolderCompareOptions = serde_json::from_value(
@@ -170,11 +171,16 @@ fn run(
                 "planCopy" => {
                     let paths: Vec<String> = serde_json::from_value(v["paths"].clone())
                         .map_err(|e| AppError::new("TEST_INPUT", e, None))?;
-                    Ok(json!(service.plan(
+                    let ignored: Vec<String> = serde_json::from_value(
+                        v.get("ignoredFolders").cloned().unwrap_or_else(|| json!([])),
+                    )
+                    .map_err(|e| AppError::new("TEST_INPUT", e, None))?;
+                    Ok(json!(service.plan_with_ignored(
                         Path::new(string(v, "leftPath")?),
                         Path::new(string(v, "rightPath")?),
                         string(v, "direction")?,
                         &paths,
+                        &ignored,
                         &cancel
                     )?))
                 }

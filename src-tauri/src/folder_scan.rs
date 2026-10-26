@@ -3,7 +3,7 @@ use crate::{
     folders::{EntryMetadata, FolderComparison, FolderEntry, FolderStatus as S, FolderSummary},
 };
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashSet},
     fs::{self, File, Metadata},
     io::Read,
     path::{Path, PathBuf},
@@ -26,6 +26,7 @@ struct Scan<'a> {
     progress: &'a mut dyn FnMut(u64),
     visited: u64,
     entries: Vec<FolderEntry>,
+    ignored: HashSet<String>,
 }
 
 /// คืน path ที่อ่านได้บน Windows โดยยังเก็บ PathBuf จริงไว้สำหรับ filesystem
@@ -320,6 +321,10 @@ impl Scan<'_> {
                 .into_iter()
                 .chain(right.as_ref())
                 .any(|e| e.info.kind == "directory");
+            // Skipped before it is counted, read or listed: the subtree never reaches the results.
+            if directory && self.ignored.contains(&crate::folders::path_key(&relative)) {
+                continue;
+            }
             let mut entry = FolderEntry {
                 relative_path: relative.clone(),
                 kind: if directory {
@@ -464,9 +469,11 @@ pub(crate) fn compare(
     progress: &mut dyn FnMut(u64),
 ) -> Result<FolderComparison, AppError> {
     check_cancel(cancel)?;
+    let ignored = crate::folders::validate_ignored_folders(&options.ignored_folders)?;
     let left = root(left)?;
     let right = root(right)?;
     let mut scan = Scan {
+        ignored,
         options,
         regex: crate::comparison_rules::CompiledRules::compile(&options.regex_rules)
             .map_err(|e| AppError::new("REGEX_RULES", e, None))?,

@@ -5,8 +5,14 @@ The temporary Electron Explorer registration was removed. Existing folder compar
 file editing, encoding and copy controls remain the Rust project's existing behavior.
 
 Implementation: native C++ IExplorerCommand DLL + small identity launcher + sparse
-MSIX package. Files and Directory menus share a remembered left path in a dedicated
-Rust registry namespace. Each Compare launches o-compare-rust.exe with literal UTF-16
+MSIX package. Files use the existing submenu and remembered LeftPath. Directories
+use a separate FolderCommandClsid registered only for Directory with ECF_DEFAULT:
+Select Left Folder for Compare changes to Compare Folders to “name”. It has no
+subcommands. LeftFolderPath is independent of file selection and is cleared after
+a successful process launch, preparing the next pair. Failed launches retain it;
+an unavailable left folder is replaced with the current folder with an explanatory
+message. Single filesystem directories only are accepted.
+Each Compare launches o-compare-rust.exe with literal UTF-16
 arguments, without a shell. Startup validates all paths and routes files to Monaco
 or directories to the existing recursive folder controller. There is no single-instance
 redirect, so existing unsaved documents stay in their original window.
@@ -23,6 +29,19 @@ missing paths and Thai/shell-character filenames. Native contract tests cover Wi
 argument quoting, installation path resolution, registry persistence and COM factory.
 Existing npm test and build checks are required before completion. Desktop/Explorer
 interaction evidence is recorded separately after the build.
+
+## Folder command change on 2026-10-26
+
+Native contracts load the real DLL from a temporary installation and isolate HKCU
+through RegOverridePredefKey. They check the folder COM factory, direct-command
+flags, file rejection, remembered title and file/folder state separation. A real
+child process records the two UTF-16 folder arguments, including Thai, spaces,
+ampersands and percent signs; the command then returns to Select for the next pair.
+They also check multi-selection rejection, retry after a failed process launch,
+and recovery when the remembered left folder is unavailable.
+These contracts do not prove Windows Explorer's visual placement or installed
+package activation. The updated package still needs normal trusted signing for
+production registration. Historical UI verification below predates this change.
 
 ## Verification on 2026-10-20
 

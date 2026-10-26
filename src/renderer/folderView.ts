@@ -9,6 +9,7 @@ import type { Side } from '../shared/types'
 import { createFileIcon } from './fileIcon'
 import { allStatuses, defaultViewOptions, matchesName, projectRows, type ProjectedRow } from './folderModel'
 import { actionButton, commandMenu, showDialog, toolbarIcon } from './folderChrome'
+import { showContextMenu, type MenuEntry } from './contextMenu'
 
 const ROW_HEIGHT = 24
 export const statusLabels: Record<FolderStatus, string> = {
@@ -61,7 +62,11 @@ export interface FolderActions {
   command(command: string): void
   open(entry: FolderEntry): void
   viewChanged(): void
+  ignoreFolders(relativePaths: string[]): void
+  manageIgnored(): void
 }
+/** Every tab owns a view; ids stay unique across them. */
+let viewSequence = 0
 
 /** Both panes share one virtual projection and one selection model. */
 export class FolderView {
@@ -83,16 +88,24 @@ export class FolderView {
   private logLines: string[] = []
   private logFrame = 0
   private toolbar: HTMLElement
+  private savedScroll = 0
+  private ids: { grid: string; log: string; history: string }
 
   constructor(
     private host: HTMLElement,
     private actions: FolderActions,
   ) {
+    const suffix = viewSequence++ === 0 ? '' : `-${viewSequence}`
+    const ids = (this.ids = {
+      grid: `folder-comparison-grid${suffix}`,
+      log: `folder-comparison-log${suffix}`,
+      history: `folder-history${suffix}`,
+    })
     host.innerHTML = `<div class="folder-toolbar" role="toolbar" aria-label="Folder commands"></div>
-      <div class="folder-paths">${(['left', 'right'] as const).map((side) => `<div class="folder-pathbar"><input data-root="${side}" aria-label="${side === 'left' ? 'Left' : 'Right'} folder" list="folder-history" spellcheck="false"><button data-pick="${side}" title="Choose ${side} folder" aria-label="Browse ${side} folder">…</button><button data-up="${side}" title="Parent directory" aria-label="Parent ${side} folder">↑</button></div>`).join('')}<datalist id="folder-history"></datalist></div>
+      <div class="folder-paths">${(['left', 'right'] as const).map((side) => `<div class="folder-pathbar"><input data-root="${side}" aria-label="${side === 'left' ? 'Left' : 'Right'} folder" list="${ids.history}" spellcheck="false"><button data-pick="${side}" title="Choose ${side} folder" aria-label="Browse ${side} folder">…</button><button data-up="${side}" title="Parent directory" aria-label="Parent ${side} folder">↑</button></div>`).join('')}<datalist id="${ids.history}"></datalist></div>
       <div class="folder-filterbar"><label>Filters: <input data-include aria-label="Include patterns" value="*.*" spellcheck="false"></label><span class="folder-progress" role="status" aria-live="polite">Choose two folders to compare</span><button data-folder-cmd="compare">Compare</button></div>
-      <div id="folder-comparison-grid" class="folder-scroll" role="treegrid" aria-label="Folder comparison" aria-colcount="7" aria-multiselectable="true" tabindex="0"><div class="folder-grid-header" role="row" aria-rowindex="1"></div><div class="folder-canvas"></div><div class="folder-empty">Choose two folders, then click Compare.</div></div>
-      <div class="folder-log-wrap"><div class="folder-log-resizer" role="separator" aria-label="Resize log" aria-orientation="horizontal" aria-controls="folder-comparison-log" aria-valuemin="40" aria-valuemax="400" aria-valuenow="90" tabindex="0"></div><div id="folder-comparison-log" class="folder-log" role="log" aria-label="Comparison log"></div></div>
+      <div id="${ids.grid}" class="folder-scroll" role="treegrid" aria-label="Folder comparison" aria-colcount="7" aria-multiselectable="true" tabindex="0"><div class="folder-grid-header" role="row" aria-rowindex="1"></div><div class="folder-canvas"></div><div class="folder-empty">Choose two folders, then click Compare.</div></div>
+      <div class="folder-log-wrap"><div class="folder-log-resizer" role="separator" aria-label="Resize log" aria-orientation="horizontal" aria-controls="${ids.log}" aria-valuemin="40" aria-valuemax="400" aria-valuenow="90" tabindex="0"></div><div id="${ids.log}" class="folder-log" role="log" aria-label="Comparison log"></div></div>
       <div class="folder-summary" aria-live="polite">No comparison yet</div><div class="folder-bottom"><span data-selection>0 selected</span><span data-space="left">Left free: —</span><span data-elapsed></span><span data-space="right">Right free: —</span></div>`
     const toolbar = host.querySelector('.folder-toolbar')!
     this.toolbar = toolbar as HTMLElement
@@ -153,14 +166,12 @@ export class FolderView {
     this.scroll.onkeydown = (e) => this.onKey(e)
     this.scroll.oncontextmenu = (e) => {
       e.preventDefault()
-      commandMenu('Selected items', [
-        ['Open files', () => this.dispatch('files')],
-        ['Copy…', () => this.dispatch('copy')],
-        ['Select…', () => this.dispatch('select')],
-        ['Expand', () => this.dispatch('expand')],
-        ['Collapse', () => this.dispatch('collapse')],
-        ['Refresh', () => this.dispatch('refresh')],
-      ])
+      const target = e.target instanceof Element ? e.target : null
+      if (target?.closest('.folder-grid-header')) return
+      // Resolve the row before selecting: selection redraws and detaches the clicked element.
+      const path = target?.closest<HTMLElement>('.folder-row')?.dataset.path
+      if (path && !this.selected.has(path)) this.select(path, false, false)
+      this.openMenu(e.clientX, e.clientY, Boolean(path))
     }
     this.observer = new ResizeObserver(() => { this.resizeAccessibility(); this.schedule() })
     this.observer.observe(this.scroll)
@@ -219,7 +230,7 @@ export class FolderView {
         divider.setAttribute('role', 'separator')
         divider.setAttribute('aria-label', 'Resize comparison panes')
         divider.setAttribute('aria-orientation', 'vertical')
-        divider.setAttribute('aria-controls', 'folder-comparison-grid')
+        divider.setAttribute('aria-controls', this.ids.grid)
         divider.setAttribute('aria-valuemin', '25')
         divider.setAttribute('aria-valuemax', '75')
         divider.tabIndex = 0
@@ -285,7 +296,7 @@ export class FolderView {
           h.setAttribute('role', 'separator')
           h.setAttribute('aria-label', h.title)
           h.setAttribute('aria-orientation', 'vertical')
-          h.setAttribute('aria-controls', 'folder-comparison-grid')
+          h.setAttribute('aria-controls', this.ids.grid)
           let start = 0,
             size = 0,
             date = 0
@@ -436,6 +447,44 @@ export class FolderView {
       log.hidden = !log.hidden
     } else this.actions.command(cmd)
     this.layout()
+  }
+  /** Row menus act on the selection; the blank-area menu offers only selection-free commands. */
+  private openMenu(x: number, y: number, onRow: boolean): void {
+    const busy = this.busy,
+      selected = this.selectedEntries(),
+      folders = selected.filter((e) => e.kind === 'directory'),
+      single = selected.length === 1,
+      isFile = single && selected[0].kind === 'file'
+    const item = (label: string, icon: string, enabled: boolean, action: () => void): MenuEntry => ({
+      label,
+      icon,
+      disabled: busy || !enabled,
+      action,
+    })
+    const separator: MenuEntry = { separator: true }
+    const entries: MenuEntry[] = onRow
+      ? [
+          item('Open files', 'files', isFile, () => this.dispatch('files')),
+          item('History', 'history', isFile, () => this.dispatch('history')),
+          item('Copy…', 'copy', this.copyAllowed && selected.length > 0, () => this.dispatch('copy')),
+          separator,
+          item('Ignore folder', 'ignore', folders.length > 0, () => this.actions.ignoreFolders(folders.map((e) => e.relativePath))),
+          item('Manage ignored folders…', 'rules', true, () => this.actions.manageIgnored()),
+          separator,
+          item('Select…', 'select', true, () => this.dispatch('select')),
+          item('Expand', 'expand', true, () => this.dispatch('expand')),
+          item('Collapse', 'collapse', true, () => this.dispatch('collapse')),
+          item('Refresh', 'refresh', true, () => this.dispatch('refresh')),
+        ]
+      : [
+          item('Select all', 'select', this.rows.length > 0, () => this.selectAll()),
+          item('Expand all', 'expand', true, () => this.fold(false, true)),
+          item('Collapse all', 'collapse', true, () => this.fold(true, true)),
+          separator,
+          item('Manage ignored folders…', 'rules', true, () => this.actions.manageIgnored()),
+          item('Refresh', 'refresh', true, () => this.dispatch('refresh')),
+        ]
+    showContextMenu(x, y, entries, onRow ? 'Selected items' : 'Folder comparison')
   }
   private filters(): void {
     const d = showDialog('Filters'),
@@ -670,9 +719,6 @@ export class FolderView {
         this.scroll.focus({ preventScroll: true })
       }
       row.ondblclick = () => this.activate(entry)
-      row.oncontextmenu = () => {
-        if (!this.selected.has(entry.relativePath)) this.select(entry.relativePath, false, false)
-      }
       fragment.append(row)
     }
     this.canvas.replaceChildren(fragment)
@@ -783,6 +829,14 @@ export class FolderView {
   private onKey(e: KeyboardEvent): void {
     // Header buttons and separators handle their own keys, independently of row navigation.
     if (e.target instanceof Element && e.target.closest('.folder-grid-header')) return
+    if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+      e.preventDefault()
+      const row = this.scroll.querySelector<HTMLElement>('.folder-row.focused') ?? this.scroll.querySelector<HTMLElement>('.folder-row.selected')
+      const box = (row ?? this.scroll).getBoundingClientRect()
+      if (row && !this.selected.size && row.dataset.path) this.select(row.dataset.path, false, false)
+      this.openMenu(box.left + 24, box.top + (row ? box.height : 8), Boolean(row))
+      return
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
       e.preventDefault()
       this.selectAll()
@@ -816,12 +870,23 @@ export class FolderView {
       this.scroll.scrollTop = (current + 2) * ROW_HEIGHT - this.scroll.clientHeight
     e.preventDefault()
   }
+  /** Inactive tabs keep their DOM, selection and scroll position but are not shown. */
+  setActive(active: boolean): void {
+    if (!active) this.savedScroll = this.scroll.scrollTop
+    this.host.hidden = !active
+    this.toolbar.hidden = !active
+    if (!active) return
+    this.scroll.scrollTop = this.savedScroll
+    this.resizeAccessibility()
+    this.schedule()
+  }
   focus(): void {
     this.scroll.focus()
     this.resizeAccessibility()
     this.schedule()
   }
   dispose(): void {
+    this.toolbar.remove()
     this.observer.disconnect()
     cancelAnimationFrame(this.frame)
     cancelAnimationFrame(this.logFrame)

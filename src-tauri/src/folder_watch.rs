@@ -3,6 +3,7 @@ use crate::error::AppError;
 use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::Serialize;
 use std::{
+    collections::HashMap,
     path::PathBuf,
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
@@ -15,6 +16,7 @@ use std::{
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FolderWatchEvent {
+    pub tab_id: String,
     pub generation: u64,
     pub error: Option<String>,
 }
@@ -26,31 +28,33 @@ impl Drop for Slot {
     }
 }
 
+/// One watcher per folder tab; generations are unique across tabs so stale events are dropped.
 #[derive(Default)]
 pub struct FolderWatchService {
-    slot: Mutex<Option<Slot>>,
+    slots: Mutex<HashMap<String, Slot>>,
     generation: AtomicU64,
 }
 
 impl FolderWatchService {
-    pub fn stop(&self) -> Result<(), AppError> {
-        self.slot
+    pub fn stop(&self, tab_id: &str) -> Result<(), AppError> {
+        self.slots
             .lock()
             .map_err(|e| AppError::new("FOLDER_WATCH", e, None))?
-            .take();
+            .remove(tab_id);
         Ok(())
     }
 
     pub fn watch(
         &self,
+        tab_id: &str,
         roots: Vec<PathBuf>,
         callback: Arc<dyn Fn(FolderWatchEvent) + Send + Sync>,
     ) -> Result<u64, AppError> {
-        let mut slot = self
-            .slot
+        let mut slots = self
+            .slots
             .lock()
             .map_err(|e| AppError::new("FOLDER_WATCH", e, None))?;
-        slot.take();
+        slots.remove(tab_id);
         let generation = self.generation.fetch_add(1, Ordering::SeqCst) + 1;
         let (tx, rx) = mpsc::channel();
         let mut watcher = RecommendedWatcher::new(
@@ -74,6 +78,7 @@ impl FolderWatchService {
         }
         let stop = Arc::new(AtomicBool::new(false));
         let worker_stop = stop.clone();
+        let worker_tab = tab_id.to_owned();
         thread::spawn(move || {
             let _watcher = watcher;
             let mut last = None;
@@ -123,6 +128,7 @@ impl FolderWatchService {
                     first = None;
                     if !worker_stop.load(Ordering::SeqCst) {
                         callback(FolderWatchEvent {
+                            tab_id: worker_tab.clone(),
                             generation,
                             error: error.take(),
                         });
@@ -130,7 +136,7 @@ impl FolderWatchService {
                 }
             }
         });
-        *slot = Some(Slot(stop));
+        slots.insert(tab_id.into(), Slot(stop));
         Ok(generation)
     }
 }

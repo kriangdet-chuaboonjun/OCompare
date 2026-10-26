@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.4.8] - 2026-10-26
+
+- Add direct folder selection and comparison in the Windows 11 Explorer context menu.
+- Add independent folder comparison tabs with per-tab results, rules, logs, and watchers, plus shared session history.
+- Add Ignore folder to folder context menus and manage ignored paths in Comparison rules; excluded subtrees are also omitted from copy previews.
+- Release publishing shows upload progress, supports slow connections, and can continue an interrupted draft without resending verified files.
+
+## [0.4.7] - 2026-10-26
+
+- Add a direct folder command to the Windows 11 Explorer context menu: select the left folder, then compare another folder to it.
+- Keep folder selection separate from file selection, reset it after a successful comparison launch, and retain it when launching fails.
+- Recover from an unavailable left folder by selecting the current folder and explaining the next step.
+
 ## [0.4.6] - 2026-10-26
 
 - The toolbar's **Install update x.y.z** button downloads and installs in one click.

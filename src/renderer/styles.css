@@ -502,3 +502,24 @@ input, select, textarea { background: var(--surface); color: var(--text); }
 #toolbar #theme-toggle[aria-pressed=true] { background: var(--pressed); border-color: var(--active-border); }
 #toolbar #theme-toggle .toolbar-icon { color: inherit; }
 select:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Folder tabs: every tab keeps its own panel; only the selected one is shown. */
+.folder-tab-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#folder-tabs { border-bottom: 1px solid var(--border); }
+.folder-ignored { margin-top: 12px; }
+.folder-ignored h3 { margin: 0 0 6px; font-size: 13px; }
+.folder-ignored ul { list-style: none; margin: 0 0 8px; padding: 0; max-height: 180px; overflow: auto; border: 1px solid var(--border); }
+.folder-ignored li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 3px 6px; }
+.folder-ignored li + li { border-top: 1px solid var(--border); }
+.folder-ignored li span { overflow-wrap: anywhere; }
+.folder-ignored-empty { color: var(--folder-muted); }
+
+/* Windows-style popup menu */
+.context-menu { position: fixed; z-index: 1000; min-width: 220px; max-width: 360px; overflow-y: auto; padding: 4px; background: var(--surface); color: var(--text); border: 1px solid var(--dialog-border, var(--border)); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .28); font: 12px 'Segoe UI', sans-serif; outline: none; }
+.context-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 30px; padding: 4px 14px 4px 6px; border: 0; border-radius: 4px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: default; }
+.context-item:hover:not([aria-disabled=true]), .context-item:focus:not([aria-disabled=true]) { background: var(--folder-hover); }
+.context-item:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.context-item[aria-disabled=true] { opacity: .5; }
+.context-icon { flex: 0 0 20px; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
+.context-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.context-separator { height: 1px; margin: 4px 8px; background: var(--border); }

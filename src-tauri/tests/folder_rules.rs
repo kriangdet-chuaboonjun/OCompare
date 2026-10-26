@@ -69,6 +69,7 @@ fn binary_and_disabled_rules_never_become_minor() {
         ignore_whitespace: false,
         ignore_eol: false,
         regex_rules: vec![],
+        ..Default::default()
     };
     let result = compare_with_options(
         &l,
@@ -96,6 +97,7 @@ fn regex_only_rules_classify_minor_without_changing_bytes_or_bom() {
     fs::write(l.join("log"), "ไทย id=123 status=ok\n").unwrap();
     fs::write(r.join("log"), "ไทย id=45678 status=ok\n").unwrap();
     let options = FolderCompareOptions {
+        ignored_folders: vec![],
         ignore_whitespace: false,
         ignore_eol: false,
         regex_rules: vec![RegexRule {

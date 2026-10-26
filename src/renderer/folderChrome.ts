@@ -30,6 +30,7 @@ const paths: Record<string, string> = {
   peek: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm7 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0',
   log: 'M4 4h16v16H4V4Zm3 4h10M7 12h10M7 16h6',
   more: 'M4 12h.01M12 12h.01M20 12h.01',
+  ignore: 'M3 7V5a2 2 0 0 1 2-2h4l3 3h7a2 2 0 0 1 2 2v1M3 7h4l2 3h11a1 1 0 0 1 1 1l-2 8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7ZM4 3l17 18',
 }
 /** Local vectors are reused by the toolbar and overflow commands. */
 export function toolbarIcon(command: string): SVGSVGElement {

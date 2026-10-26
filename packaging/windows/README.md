@@ -1,8 +1,17 @@
 # Explorer integration
 
-Right-click a file or folder: OCompare > Select Left for Compare.
-Right-click another item: OCompare > Compare to the selected left item.
-Both items must be files, or both must be folders. Comparison opens a new Rust app process.
+Folders (one folder at a time, directly on the Windows 11 main context menu):
+1. Right-click the left folder: **Select Left Folder for Compare**.
+2. Right-click the right folder: **Compare Folders to “left folder name”**.
+3. OCompare opens Folder Compare with both paths. The command resets for the next pair.
+
+The folder command changes its action so Windows does not group multiple verbs into
+an app flyout. Folder selection is independent of file selection. A failed launch
+keeps the left folder for retry. If that folder was removed, the command selects the
+current folder as the new left folder and explains that another folder must be chosen.
+
+Files retain **OCompare > Select Left for Compare**, then **OCompare > Compare to**.
+Comparison opens a new app process and leaves existing windows intact.
 
 Production registration requires a signed MSIX trusted by Windows. Configure
 OCOMPARE_PACKAGE_PUBLISHER, OCOMPARE_SIGN_CERT_PATH, optionally

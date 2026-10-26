@@ -46,6 +46,10 @@ fn validate(value: &Value) -> Result<(), AppError> {
                 serde_json::from_value(rules.clone()).map_err(|_| invalid())?;
             crate::comparison_rules::CompiledRules::compile(&rules).map_err(|_| invalid())?;
         }
+        if let Some(ignored) = s["rules"].get("ignoredFolders") {
+            let ignored: Vec<String> = serde_json::from_value(ignored.clone()).map_err(|_| invalid())?;
+            crate::folders::validate_ignored_folders(&ignored).map_err(|_| invalid())?;
+        }
         let v = &s["view"];
         for key in ["include", "exclude"] {
             if v[key].as_str().is_none_or(|s| s.len() > 4096) {

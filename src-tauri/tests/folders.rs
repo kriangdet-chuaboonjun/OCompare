@@ -156,16 +156,34 @@ fn windows_names_pair_case_insensitively() {
 }
 
 #[test]
-fn job_cancellation_and_old_completion_do_not_affect_new_job() {
+fn jobs_are_tracked_per_request_so_tabs_do_not_cancel_each_other() {
     let jobs = o_compare_rust::folders::FolderJobs::default();
     let first = jobs.begin("first").unwrap();
     let second = jobs.begin("second").unwrap();
+    assert!(!first.load(Ordering::SeqCst) && !second.load(Ordering::SeqCst));
+    assert!(jobs.begin("first").is_err(), "duplicate request IDs are rejected");
+    jobs.cancel("first").unwrap();
     assert!(first.load(Ordering::SeqCst));
+    assert!(!second.load(Ordering::SeqCst));
     jobs.finish("first");
     jobs.cancel("first").unwrap();
+    jobs.cancel("unknown").unwrap();
     assert!(!second.load(Ordering::SeqCst));
     jobs.cancel("second").unwrap();
     assert!(second.load(Ordering::SeqCst));
+}
+
+#[test]
+fn copy_is_exclusive_and_waits_for_comparisons() {
+    let jobs = o_compare_rust::folders::FolderJobs::default();
+    jobs.begin("scan").unwrap();
+    assert!(jobs.begin_copy("copy").is_err(), "copy cannot start during a comparison");
+    jobs.finish("scan");
+    jobs.begin_copy("copy").unwrap();
+    assert!(jobs.begin("scan-2").is_err(), "comparison cannot start during a copy");
+    assert!(jobs.begin_copy("copy-2").is_err(), "only one copy runs app-wide");
+    jobs.finish("copy");
+    jobs.begin("scan-2").unwrap();
 }
 
 #[test]

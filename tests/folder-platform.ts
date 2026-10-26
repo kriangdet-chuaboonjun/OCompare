@@ -42,23 +42,30 @@ export const api: OCompareApi = {
     window.testDirty = dirty
   },
 }
-let progressCallback: ((progress: FolderProgress) => void) | null = null
+// One poller drains the shared Rust queue and fans out to every tab; tabs filter by tabId.
+const changedListeners = new Set<(event: import('../src/shared/folders').FolderWatchEvent) => void>()
+let polling = false
+function pollWatchEvents(): void {
+  if (polling) return
+  polling = true
+  const timer = setInterval(() => {
+    if (!changedListeners.size) { clearInterval(timer); polling = false; return }
+    void transport<import('../src/shared/folders').FolderWatchEvent[]>('workspace', { action: 'watchEvents' })
+      .then(events => events.forEach(event => changedListeners.forEach(listener => listener(event)))).catch(() => {})
+  }, 150)
+}
+const progressListeners = new Set<(progress: FolderProgress) => void>()
 export const folderApi: FolderApi = {
-  watchFolders: (leftPath, rightPath) => transport('workspace', { action: 'watchFolders', leftPath, rightPath }),
-  stopWatching: () => transport('workspace', { action: 'stopWatch' }),
+  watchFolders: (tabId, leftPath, rightPath) => transport('workspace', { action: 'watchFolders', tabId, leftPath, rightPath }),
+  stopWatching: tabId => transport('workspace', { action: 'stopWatch', tabId }),
   onChanged: async callback => {
-    let pending = false
-    const timer = setInterval(() => {
-      if (pending) return
-      pending = true
-      void transport<import('../src/shared/folders').FolderWatchEvent[]>('workspace', { action: 'watchEvents' })
-        .then(events => events.forEach(callback)).catch(() => {}).finally(() => { pending = false })
-    }, 150)
-    return () => clearInterval(timer)
+    changedListeners.add(callback)
+    pollWatchEvents()
+    return () => { changedListeners.delete(callback) }
   },
   openDirectory: async () => null,
   compare: async (leftPath, rightPath, requestId, options) => {
-    progressCallback?.({ requestId, visited: 0 })
+    progressListeners.forEach(listener => listener({ requestId, visited: 0 }))
     const result = await transport<Awaited<ReturnType<FolderApi['compare']>>>('workspace', {
       action: 'compare',
       leftPath,
@@ -72,16 +79,14 @@ export const folderApi: FolderApi = {
   },
   cancel: (requestId) => transport('workspace', { action: 'cancel', requestId }),
   onProgress: async (callback) => {
-    progressCallback = callback
-    return () => {
-      progressCallback = null
-    }
+    progressListeners.add(callback)
+    return () => { progressListeners.delete(callback) }
   },
   loadSessions: () => transport('workspace', { action: 'loadSessions' }),
   saveSessions: (store) => transport('workspace', { action: 'saveSessions', store }),
   diskSpace: (path) => transport('workspace', { action: 'diskSpace', path }),
-  planCopy: (leftPath, rightPath, direction, paths, requestId) =>
-    transport('workspace', { action: 'planCopy', leftPath, rightPath, direction, paths, requestId }),
+  planCopy: (leftPath, rightPath, direction, paths, requestId, ignoredFolders) =>
+    transport('workspace', { action: 'planCopy', leftPath, rightPath, direction, paths, requestId, ignoredFolders }),
   executeCopy: (planId, requestId) => transport('workspace', { action: 'executeCopy', planId, requestId }),
   discardCopy: (planId) => transport('workspace', { action: 'discardCopy', planId }),
   onCopyProgress: async () => () => {},

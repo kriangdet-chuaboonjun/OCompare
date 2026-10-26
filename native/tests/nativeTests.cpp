@@ -2,6 +2,7 @@
 #include <shellapi.h>
 #include <shobjidl.h>
 #include <cstdio>
+int FolderCommandTests();
 // Optional end-to-end mode exercises the registered COM server with real shell items.
 int RegisteredCompare(const wchar_t* left,const wchar_t* right){
   auto hr=CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);if(FAILED(hr))return 1;
@@ -27,6 +28,15 @@ int RegisteredCompare(const wchar_t* left,const wchar_t* right){
   if(root)root->Release();CoUninitialize();printf("registered compare HRESULT: 0x%08X\n",static_cast<unsigned>(hr));return FAILED(hr)?1:0;
 }
 int wmain(int argc,wchar_t** argv){
+  // A copied test executable records the real UTF-16 launch arguments.
+  if(argc==4&&std::wstring(argv[1])==L"--compare"){
+    const auto output=std::wstring(argv[3])+L"\\received.txt";
+    HANDLE file=CreateFileW(output.c_str(),GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+    if(file==INVALID_HANDLE_VALUE)return 1;
+    auto value=std::wstring(argv[2])+L"\n"+argv[3];DWORD written=0;
+    const auto ok=WriteFile(file,value.data(),static_cast<DWORD>(value.size()*sizeof(wchar_t)),&written,nullptr);
+    CloseHandle(file);return ok?0:1;
+  }
   if(argc==4&&std::wstring(argv[1])==L"--registered")return RegisteredCompare(argv[2],argv[3]);
   int failed=0;
   for(const auto& value:{L"C:\\a b\\",L"C:\\ไทย & %!.txt",L"\\\\server\\share\\x.txt",L"a\"b",L""}){
@@ -65,5 +75,6 @@ int wmain(int argc,wchar_t** argv){
     }
     if(factory)factory->Release();FreeLibrary(dll);
   }
+  failed+=FolderCommandTests();
   printf("native failures: %d\n",failed);return failed?1:0;
 }

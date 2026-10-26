@@ -5,29 +5,33 @@ import type {
   FolderComparison,
   FolderEntry,
   FolderSession,
-  SessionStore,
 } from '../shared/folders'
 import type { Side } from '../shared/types'
 import { FolderView } from './folderView'
 import { actionButton, commandMenu, showDialog } from './folderChrome'
+import { addIgnoredFolders, normalizeIgnoredFolders } from './folderModel'
+import type { SessionStorage } from './folderSessions'
+
+/** Rules shared by every folder tab: only one copy runs, and never beside a comparison. */
+export interface FolderGuard {
+  compareBlocked(self: FolderController): string | null
+  copyBlocked(self: FolderController): string | null
+}
 
 /** Coordinates native jobs; only the current request can replace visible results. */
 export class FolderController {
   readonly view: FolderView
   roots: Record<Side, string> = { left: '', right: '' }
   result: FolderComparison | null = null
-  rules: FolderCompareOptions = { ignoreWhitespace: true, ignoreEol: true }
+  rules: FolderCompareOptions = { ignoreWhitespace: true, ignoreEol: true, ignoredFolders: [] }
   private current: string | null = null
   private phase: 'scan' | 'plan' | 'copy' | null = null
   private off: Array<() => void> = []
   private ready: Promise<void>
-  private sessionsReady: Promise<void>
-  private store: SessionStore = { version: 1, sessions: [], history: [] }
-  private storeUsable = true
+  private unsubscribeSessions: () => void
   private disposed = false
   private actionsSuspended = false
   private pendingActions = new Set<Promise<unknown>>()
-  private sessionQueue: Promise<unknown> = Promise.resolve()
   private watchGeneration = 0
   private watchRoots = ''
   private watchRequest = 0
@@ -41,6 +45,9 @@ export class FolderController {
   constructor(
     host: HTMLElement,
     private service: FolderApi,
+    readonly tabId: string,
+    private sessions: SessionStorage,
+    private guard: FolderGuard,
     private openPair: (entry: FolderEntry) => Promise<void>,
     private changed: () => void,
     private dirtyPaths: () => string[] = () => [],
@@ -56,6 +63,8 @@ export class FolderController {
           await openPair(entry)
         }),
       viewChanged: () => {},
+      ignoreFolders: (paths) => this.safe(() => this.ignoreFolders(paths)),
+      manageIgnored: () => this.safe(() => this.rulesDialog()),
     })
     this.view.setWatching(true)
     this.ready = Promise.all([
@@ -68,7 +77,7 @@ export class FolderController {
           this.view.message(`Copying ${p.completed}/${p.total}: ${p.relativePath}`)
       }),
       service.onChanged?.((event) => {
-        if (event.generation !== this.watchGeneration || this.disposed) return
+        if (event.tabId !== this.tabId || event.generation !== this.watchGeneration || this.disposed) return
         this.markStale(event.error ? `Folder watcher: ${event.error} — press Refresh` : 'Folders changed — press Refresh')
       }) ?? Promise.resolve(() => {}),
     ]).then((list) => {
@@ -76,16 +85,11 @@ export class FolderController {
       else this.off = list
     })
     void this.ready.catch((e) => this.error(e))
-    this.sessionsReady = service
-      .loadSessions()
-      .then((store) => {
-        this.store = store
-        this.view.setHistory(store.history)
-      })
-      .catch((e) => {
-        this.storeUsable = false
-        this.error(e)
-      })
+    this.unsubscribeSessions = sessions.onChange((store) => this.view.setHistory(store.history))
+    void sessions.ready.then(() => {
+      if (sessions.usable) this.view.setHistory(sessions.store.history)
+      else this.error(sessions.loadError)
+    })
   }
   private safe(work: () => Promise<unknown> | void): void {
     if (this.actionsSuspended) return
@@ -104,10 +108,18 @@ export class FolderController {
   get busy(): boolean {
     return this.current !== null
   }
+  /** Files are being written: the tab cannot be closed until the copy has stopped. */
+  get copyRunning(): boolean {
+    return this.phase === 'copy'
+  }
+  /** Planning or running a copy; other tabs may be viewed but cannot start jobs meanwhile. */
+  get copying(): boolean {
+    return this.phase === 'plan' || this.phase === 'copy'
+  }
   /** Freeze new commands while pending native dialogs and writes drain before an update. */
   suspendActions(value: boolean): void { this.actionsSuspended = value }
   async settleActions(): Promise<void> {
-    await Promise.all([...this.pendingActions, this.sessionQueue])
+    await Promise.all([...this.pendingActions])
   }
   private async command(command: string): Promise<void> {
     if (command === 'compare' || command === 'refresh') await this.compare()
@@ -117,7 +129,7 @@ export class FolderController {
       this.setRoot('left', right)
       this.setRoot('right', left)
       await this.compare()
-    } else if (command === 'home' || command === 'sessions') await this.sessions()
+    } else if (command === 'home' || command === 'sessions') await this.openSessions()
     else if (command === 'rules') this.rulesDialog()
     else if (command === 'watch') {
       this.watching = !this.watching
@@ -146,7 +158,7 @@ export class FolderController {
     this.watchRoots = ''
     this.watchGeneration = 0
     this.watchRequest++
-    this.watchQueue = this.watchQueue.catch(() => {}).then(async () => { await this.service.stopWatching?.() })
+    this.watchQueue = this.watchQueue.catch(() => {}).then(async () => { await this.service.stopWatching?.(this.tabId) })
     this.stale = true
     this.roots[side] = value
     this.view.setRoots(this.roots.left, this.roots.right)
@@ -181,9 +193,9 @@ export class FolderController {
     this.watchGeneration = 0
     this.watchQueue = this.watchQueue.catch(() => {}).then(async () => {
       if (request !== this.watchRequest || this.disposed) return
-      await this.service.stopWatching?.()
+      await this.service.stopWatching?.(this.tabId)
       if (!key || !this.roots.left || !this.roots.right) return
-      const generation = await this.service.watchFolders?.(this.roots.left, this.roots.right)
+      const generation = await this.service.watchFolders?.(this.tabId, this.roots.left, this.roots.right)
       if (request === this.watchRequest && !this.disposed) this.watchGeneration = generation ?? 0
     }).catch(e => { this.watchRoots = ''; this.markStale(`Folder watcher unavailable — press Refresh: ${String(e)}`) })
     return this.watchQueue
@@ -212,6 +224,11 @@ export class FolderController {
   async compare(): Promise<void> {
     if (this.actionsSuspended) return
     if (this.phase === 'copy') return
+    const blocked = this.guard.compareBlocked(this)
+    if (blocked) {
+      this.view.message(blocked)
+      return
+    }
     const left = this.roots.left.trim(),
       right = this.roots.right.trim()
     if (!left || !right) {
@@ -260,14 +277,12 @@ export class FolderController {
             if (this.result === result) this.view.setSpace(side, null, String(e))
             this.view.log(`Disk space: ${e}`)
           })
-      await this.sessionsReady
-      if (this.storeUsable) {
-        const next = {
-          ...this.store,
-          history: [...new Set([left, right, ...this.store.history])].slice(0, 50),
-        }
-        await this.persist(next)
-      }
+      await this.sessions.ready
+      if (this.sessions.usable)
+        await this.sessions.update((store) => ({
+          ...store,
+          history: [...new Set([left, right, ...store.history])].slice(0, 50),
+        }))
     } catch (e) {
       if (this.current === id) this.error(e)
     } finally {
@@ -280,7 +295,8 @@ export class FolderController {
   }
   private rulesDialog(): void {
     const d = showDialog('Comparison rules'),
-      options = { ...this.rules }
+      options = { ...this.rules },
+      ignored = [...(this.rules.ignoredFolders ?? [])]
     for (const [key, label] of [
       ['ignoreWhitespace', 'Ignore spaces and tabs within lines'],
       ['ignoreEol', 'Ignore LF / CRLF differences'],
@@ -301,31 +317,76 @@ export class FolderController {
       'Identical always means equal bytes. Minor checks text up to 10 MiB per file. Case, blank lines and final newline remain significant.'
     d.body.append(help)
     d.body.append(actionButton('Regex rules…', () => { d.close(); this.safe(() => this.onRegexRules()) }))
+    const section = document.createElement('section'),
+      heading = document.createElement('h3'),
+      list = document.createElement('ul')
+    section.className = 'folder-ignored'
+    heading.textContent = 'Ignored folders'
+    list.setAttribute('aria-label', 'Ignored folders')
+    const renderIgnored = () => {
+      list.replaceChildren(
+        ...ignored.map((path) => {
+          const item = document.createElement('li'),
+            name = document.createElement('span'),
+            remove = actionButton('Remove', () => {
+              ignored.splice(ignored.indexOf(path), 1)
+              renderIgnored()
+            })
+          name.textContent = path
+          remove.setAttribute('aria-label', `Remove ignored folder ${path}`)
+          item.append(name, remove)
+          return item
+        }),
+      )
+      if (!ignored.length) {
+        const none = document.createElement('li')
+        none.className = 'folder-ignored-empty'
+        none.textContent = 'None. Right-click a folder and choose Ignore folder.'
+        list.append(none)
+      }
+      clear.disabled = !ignored.length
+    }
+    const clear = actionButton('Clear all', () => {
+      ignored.length = 0
+      renderIgnored()
+    })
+    renderIgnored()
+    section.append(heading, list, clear)
+    d.body.append(section)
     d.footer.append(
       actionButton('Cancel', d.close),
       actionButton('Apply', () => {
-        this.rules = options
+        const ignoreChanged = JSON.stringify(ignored) !== JSON.stringify(this.rules.ignoredFolders ?? [])
+        this.rules = { ...options, ignoredFolders: ignored }
+        d.close()
+        if (ignoreChanged) {
+          this.applyIgnored('Ignore list changed')
+          return
+        }
         this.markStale('Rules changed — press Refresh')
         this.view.setCopyAllowed(false)
         this.view.message('Rules changed — click Compare')
-        d.close()
       }),
     )
   }
-  private async persist(next: SessionStore): Promise<void> {
-    const task = this.sessionQueue
-      .catch(() => {})
-      .then(async () => {
-        await this.service.saveSessions(next)
-        this.store = next
-        this.view.setHistory(next.history)
-      })
-    this.sessionQueue = task
-    await task
+  private async ignoreFolders(paths: string[]): Promise<void> {
+    if (this.busy) return
+    const before = this.rules.ignoredFolders ?? [],
+      next = addIgnoredFolders(before, paths)
+    if (next.length === before.length && next.every((path, index) => path === before[index])) return
+    this.rules = { ...this.rules, ignoredFolders: next }
+    this.view.log(`Ignored: ${paths.join(', ')}`)
+    this.applyIgnored(`Ignored ${paths.length === 1 ? paths[0] : `${paths.length} folders`}`)
   }
-  private async sessions(): Promise<void> {
-    await this.sessionsReady
-    if (!this.storeUsable)
+  /** Old copy previews must not run against a different scan; compare again right away. */
+  private applyIgnored(message: string): void {
+    this.markStale(message)
+    this.view.setCopyAllowed(false)
+    void this.compare()
+  }
+  private async openSessions(): Promise<void> {
+    await this.sessions.ready
+    if (!this.sessions.usable)
       throw new Error(
         'Sessions file cannot be read. Original preserved; resolve the reported error before saving.',
       )
@@ -338,7 +399,7 @@ export class FolderController {
     name.placeholder = 'Session name'
     const render = () => {
       list.replaceChildren(
-        ...this.store.sessions.map((s) => {
+        ...this.sessions.store.sessions.map((s) => {
           const o = document.createElement('option')
           o.value = s.id
           o.textContent = s.name
@@ -348,7 +409,7 @@ export class FolderController {
     }
     render()
     list.onchange = () => {
-      name.value = this.store.sessions.find((s) => s.id === list.value)?.name ?? ''
+      name.value = this.sessions.store.sessions.find((s) => s.id === list.value)?.name ?? ''
     }
     d.body.append(list, name)
     const operation = (work: () => Promise<void>) =>
@@ -365,11 +426,11 @@ export class FolderController {
     d.footer.append(
       actionButton('Close', d.close),
       actionButton('Open', () => {
-        const s = this.store.sessions.find((s) => s.id === list.value)
+        const s = this.sessions.store.sessions.find((s) => s.id === list.value)
         if (!s) return
         this.setRoot('left', s.leftPath)
         this.setRoot('right', s.rightPath)
-        this.rules = { ...s.rules }
+        this.rules = { ...s.rules, ignoredFolders: normalizeIgnoredFolders(s.rules.ignoredFolders) }
         this.view.setOptions(s.view)
         this.view.message(`Session: ${s.name} — click Compare`)
         d.close()
@@ -386,28 +447,26 @@ export class FolderController {
             rules: { ...this.rules },
             view: structuredClone(this.view.options),
           }
-          await this.persist({ ...this.store, sessions: [...this.store.sessions, s] })
+          await this.sessions.update((store) => ({ ...store, sessions: [...store.sessions, s] }))
           this.view.log(`Session saved: ${s.name}`)
         }),
       ),
       actionButton('Rename', () =>
         operation(async () => {
           if (!list.value || !name.value.trim()) throw new Error('Select a session and enter its name')
-          await this.persist({
-            ...this.store,
-            sessions: this.store.sessions.map((s) =>
-              s.id === list.value ? { ...s, name: name.value.trim() } : s,
-            ),
-          })
+          const id = list.value,
+            title = name.value.trim()
+          await this.sessions.update((store) => ({
+            ...store,
+            sessions: store.sessions.map((s) => (s.id === id ? { ...s, name: title } : s)),
+          }))
         }),
       ),
       actionButton('Delete', () =>
         operation(async () => {
           if (!list.value) return
-          await this.persist({
-            ...this.store,
-            sessions: this.store.sessions.filter((s) => s.id !== list.value),
-          })
+          const id = list.value
+          await this.sessions.update((store) => ({ ...store, sessions: store.sessions.filter((s) => s.id !== id) }))
         }),
       ),
     )
@@ -468,6 +527,8 @@ export class FolderController {
   }
   private async copy(direction: Side): Promise<void> {
     if (this.busy || !this.result) return
+    const blocked = this.guard.copyBlocked(this)
+    if (blocked) throw new Error(blocked)
     if (this.stale) throw new Error('Folders changed — press Refresh before copying')
     const paths = this.view.copyPaths()
     if (!paths.length) throw new Error('Select files or folders matching the current name filters first')
@@ -482,7 +543,7 @@ export class FolderController {
     let plan: CopyPlan | null = null
     try {
       await this.ready
-      plan = await this.service.planCopy(left, right, direction, paths, id)
+      plan = await this.service.planCopy(left, right, direction, paths, id, this.rules.ignoredFolders ?? [])
       if (this.current !== id || this.disposed) {
         await this.service.discardCopy(plan.planId)
         return
@@ -531,7 +592,8 @@ export class FolderController {
     this.cancel(false)
     this.off.splice(0).forEach((off) => off())
     this.watchRequest++
-    void this.service.stopWatching?.().catch(() => {})
+    this.unsubscribeSessions()
+    void this.service.stopWatching?.(this.tabId).catch(() => {})
     this.view.dispose()
   }
 }

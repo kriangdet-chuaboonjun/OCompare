@@ -1,7 +1,7 @@
 {
   "name": "o-compare-rust",
   "productName": "OCompare",
-  "version": "0.4.6",
+  "version": "0.4.8",
   "private": true,
   "type": "module",
   "description": "Side-by-side text compare using Tauri, Rust and Monaco",
@@ -16,13 +16,14 @@
     "test:theme": "node scripts/test-theme.mjs",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "test:editor": "node scripts/test-editor.mjs && node scripts/test-tabs.mjs && node scripts/test-tabs-ui.mjs && node --disable-warning=ExperimentalWarning scripts/test-regex-diff.mjs && node scripts/test-regex-browser.mjs",
-    "test:folders": "cargo build --manifest-path src-tauri/Cargo.toml --no-default-features --examples && node --disable-warning=ExperimentalWarning scripts/test-folder-tree.mjs && node --disable-warning=ExperimentalWarning scripts/test-folder-model.mjs && node scripts/test-folders-ui.mjs && node scripts/test-folder-controls.mjs && node scripts/test-workspace-features.mjs",
+    "test:folders": "cargo build --manifest-path src-tauri/Cargo.toml --no-default-features --examples && node --disable-warning=ExperimentalWarning scripts/test-folder-tree.mjs && node --disable-warning=ExperimentalWarning scripts/test-folder-model.mjs && node scripts/test-folders-ui.mjs && node scripts/test-folder-controls.mjs && node scripts/test-workspace-features.mjs && node scripts/test-folder-tabs.mjs",
     "build:win": "powershell -NoProfile -File scripts/build-release.ps1",
     "tauri": "tauri",
     "setup:updater-signing": "powershell -NoProfile -File scripts/setup-updater-signing.ps1",
     "publish:release": "node scripts/publish-release.mjs",
-    "test:updater": "node --disable-warning=ExperimentalWarning scripts/test-updater.mjs && node --disable-warning=ExperimentalWarning scripts/test-install-guard.mjs && node scripts/test-release-artifacts.mjs && node scripts/test-updater-ui.mjs && node scripts/test-workspace-updater.mjs",
-    "release:win": "npm test && npm run build:win && npm run publish:release"
+    "test:updater": "node --disable-warning=ExperimentalWarning scripts/test-updater.mjs && node --disable-warning=ExperimentalWarning scripts/test-install-guard.mjs && npm run test:release && node scripts/test-updater-ui.mjs && node scripts/test-workspace-updater.mjs",
+    "release:win": "npm test && npm run build:win && npm run publish:release",
+    "test:release": "node scripts/test-release-artifacts.mjs && node scripts/test-release-upload.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

@@ -13,6 +13,8 @@ import type { FileData, Side } from '../shared/types'
 import type { FolderEntry } from '../shared/folders'
 import { api, folderApi, comparisonRulesApi, backupApi, confirm, getStartupComparison, initializePlatform, setTitle, toError, type DropEvent } from './platform'
 import { FolderController } from './folderController'
+import { FolderTabs } from './folderTabs'
+import { SessionStorage } from './folderSessions'
 import { DiffView, type ViewMode, type SideState } from './diffView'
 import { allLanguages } from './language'
 import { defineThemes, initializeTheme } from './theme'
@@ -43,15 +45,23 @@ const status = (msg: string) => ($<HTMLElement>('#st-msg').textContent = msg)
 let mode: 'files' | 'folders' = 'files'
 let installationLocked = false
 const pendingActions = new Set<Promise<unknown>>()
-const folders = new FolderController(document.getElementById('folder-panel')!, folderApi, openFolderEntry, () => {
-  renderHeaders()
-  renderStatus()
-}, () => getAllDirtyPaths())
-folders.onHistory = showHistory
-folders.onRegexRules = async () => {
-  const rules = await openComparisonRules({ rules: folders.rules.regexRules ?? [], ...comparisonRulesApi })
-  if (rules) { folders.rules = { ...folders.rules, regexRules: rules }; folders.markStale('Rules changed — press Refresh') }
-}
+const folderSessions = new SessionStorage(folderApi)
+/** One controller per folder tab; the sessions store is shared so saves never overwrite each other. */
+const folderTabs = new FolderTabs(document.getElementById('folder-panel')!, (id, host, guard) => {
+  const controller: FolderController = new FolderController(host, folderApi, id, folderSessions, guard, entry => openFolderEntry(controller, entry), () => {
+    folderTabs.changed()
+    renderHeaders()
+    renderStatus()
+  }, () => getAllDirtyPaths())
+  controller.onHistory = showHistory
+  controller.onRegexRules = async () => {
+    const rules = await openComparisonRules({ rules: controller.rules.regexRules ?? [], ...comparisonRulesApi })
+    if (rules) { controller.rules = { ...controller.rules, regexRules: rules }; controller.markStale('Rules changed — press Refresh') }
+  }
+  return controller
+}, folderSessions, status)
+const activeFolders = () => folderTabs.active.controller
+folderTabs.onChange(renderStatus)
 /** ป้องกัน unhandled rejection จาก native dialogs, events และ commands */
 const run = (action: () => void | Promise<unknown>): void => {
   if (installationLocked) return
@@ -164,7 +174,7 @@ function renderHeaders(): void {
 
 function renderStatus(): void {
   if (mode === 'folders') {
-    const summary = folders.result?.summary
+    const summary = activeFolders().result?.summary
     $<HTMLElement>('#st-diffs').textContent = summary ? `${summary.files} files · ${summary.directories} folders` : 'Folder Comparison'
     $<HTMLElement>('#st-pos').textContent = summary ? `${summary.errors} errors · ${summary.skipped} skipped` : ''
     return
@@ -197,11 +207,11 @@ function setMode(next: 'files' | 'folders'): void {
   renderHeaders()
   renderStatus()
   if (next === 'files') view.editor.layout()
-  else folders.view.focus()
+  else activeFolders().view.focus()
 }
 
 /** Folder comparisons open a separate tab without disturbing edited comparisons. */
-async function openFolderEntry(entry: FolderEntry): Promise<void> {
+async function openFolderEntry(controller: FolderController, entry: FolderEntry): Promise<void> {
   if ([entry.left, entry.right].some(info => info && info.kind !== 'file')) throw new Error('Select a pair of regular text files')
   const existing = tabs.findPair(entry.left?.path ?? null, entry.right?.path ?? null)
   if (existing) { tabs.activate(existing.id); setMode('files'); return }
@@ -213,7 +223,7 @@ async function openFolderEntry(entry: FolderEntry): Promise<void> {
   }))
   const duplicate = tabs.findPair(files[0].path, files[1].path)
   const tab = duplicate ?? tabs.create()
-  if (!duplicate) tab.regexRules = structuredClone(folders.rules.regexRules ?? [])
+  if (!duplicate) tab.regexRules = structuredClone(controller.rules.regexRules ?? [])
   if (!duplicate) for (const [index, side] of SIDES.entries()) await watchDocument(tabs.replace(tab, side, files[index]))
   else tabs.activate(tab.id)
   setMode('files')
@@ -221,10 +231,9 @@ async function openFolderEntry(entry: FolderEntry): Promise<void> {
 }
 
 document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(button => button.addEventListener('click', () => {
-  if (folders.busy) { status('Use Stop and wait for the folder job before switching modes.'); return }
   setMode(button.dataset.mode as 'files' | 'folders')
 }))
-window.addEventListener('pagehide', () => folders.dispose(), { once: true })
+window.addEventListener('pagehide', () => folderTabs.dispose(), { once: true })
 async function watchDocument(doc: SideState): Promise<void> { if (!doc.path?.startsWith('history://')) await api.watchFile(doc.id, doc.path) }
 
 /** Async reads are bound to the original tab and side; switching tabs is harmless. */
@@ -391,7 +400,7 @@ async function showHistory(path: string): Promise<void> {
       tabs.replace(tab, 'left', snapshot); tabs.replace(tab, 'right', current)
       tabs.activate(tab.id); await watchDocument(tab.sides.right); setMode('files')
     },
-    onRestored: async target => { await reloadPath(target); folders.markStale('File restored — press Refresh'); status(`Restored ${target}`) },
+    onRestored: async target => { await reloadPath(target); folderTabs.markAllStale('File restored — press Refresh'); status(`Restored ${target}`) },
   })
 }
 
@@ -437,7 +446,12 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') { e.preventDefault(); cycleTab(e.shiftKey ? -1 : 1); return }
   }
   if (mode === 'folders') {
-    if (e.key === 'F5') { e.preventDefault(); run(() => folders.compare()) }
+    if (e.ctrlKey && !e.altKey) {
+      if (e.key.toLowerCase() === 't') { e.preventDefault(); folderTabs.create(); return }
+      if (e.key.toLowerCase() === 'w') { e.preventDefault(); folderTabs.close(folderTabs.active.id); return }
+      if (e.key === 'Tab') { e.preventDefault(); folderTabs.cycle(e.shiftKey ? -1 : 1); return }
+    }
+    if (e.key === 'F5') { e.preventDefault(); run(() => activeFolders().compare()) }
     return
   }
   if ((e.target as HTMLElement).closest('.monaco-editor')) return
@@ -502,10 +516,10 @@ refreshToggles()
 renderHeaders()
 renderStatus()
 const updates = mountUpdater(__APP_VERSION__, updaterApi, new WorkspaceInstallGuard({
-  busy: () => folders.busy,
+  busy: () => folderTabs.busy,
   lock: locked => {
     installationLocked = locked
-    folders.suspendActions(locked)
+    folderTabs.suspendActions(locked)
     view.suspendEditing(locked)
     for (const id of ['toolbar', 'file-tabs', 'panes-head', 'editor', 'folder-panel']) document.getElementById(id)!.inert = locked
     if (!locked) {
@@ -515,7 +529,7 @@ const updates = mountUpdater(__APP_VERSION__, updaterApi, new WorkspaceInstallGu
     }
   },
   settle: async () => {
-    await Promise.all([...pendingActions, ...pendingSaves.values(), folders.settleActions()])
+    await Promise.all([...pendingActions, ...pendingSaves.values(), folderTabs.settleActions()])
   },
   resolveUnsaved: () => resolveUnsaved(tabs.documents()),
 }))
@@ -524,17 +538,18 @@ if ('__TAURI_INTERNALS__' in window) void updates.check(false)
 run(async () => {
   await initializePlatform(handleDrop, status, async () => {
     if (installationLocked) return false
-    if (!folders.busy) return resolveUnsaved(tabs.documents())
+    if (!folderTabs.busy) return resolveUnsaved(tabs.documents())
     status('A folder job is running. Use Stop and wait for completion before closing.')
     return false
   })
   const startup = await getStartupComparison()
   if (!startup) return
   if (startup.mode === 'folders') {
-    folders.setRoot('left', startup.paths[0])
-    folders.setRoot('right', startup.paths[1])
+    const startupTab = activeFolders()
+    startupTab.setRoot('left', startup.paths[0])
+    startupTab.setRoot('right', startup.paths[1])
     setMode('folders')
-    await folders.compare()
+    await startupTab.compare()
   } else {
     await Promise.all(SIDES.map((side, i) => startup.paths[i] ? loadFile(side, startup.paths[i]) : Promise.resolve()))
   }

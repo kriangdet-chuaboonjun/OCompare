@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    folders::{compare_folders, FolderStatus},
+    folders::{compare_with_options, FolderCompareOptions, FolderStatus},
 };
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -199,6 +199,18 @@ impl CopyService {
         paths: &[String],
         cancel: &AtomicBool,
     ) -> Result<CopyPlan, AppError> {
+        self.plan_with_ignored(left, right, direction, paths, &[], cancel)
+    }
+    /// Ignored folders are excluded from the preview scan, so copying a parent never includes them.
+    pub fn plan_with_ignored(
+        &self,
+        left: &Path,
+        right: &Path,
+        direction: &str,
+        paths: &[String],
+        ignored_folders: &[String],
+        cancel: &AtomicBool,
+    ) -> Result<CopyPlan, AppError> {
         if !matches!(direction, "left" | "right") {
             return Err(AppError::new("COPY_DIRECTION", "Invalid direction", None));
         }
@@ -213,7 +225,18 @@ impl CopyService {
                 None,
             ));
         }
-        let result = compare_folders(&left, &right, "copy-preview", cancel, &mut |_| {})?;
+        let options = FolderCompareOptions {
+            ignored_folders: ignored_folders.to_vec(),
+            ..Default::default()
+        };
+        let result = compare_with_options(
+            &left,
+            &right,
+            "copy-preview",
+            &options,
+            cancel,
+            &mut |_| {},
+        )?;
         let (source_root, destination_root) = if direction == "left" {
             (left, right)
         } else {

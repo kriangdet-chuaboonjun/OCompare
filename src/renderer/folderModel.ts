@@ -119,3 +119,18 @@ export function projectRows(
   visit('')
   return result
 }
+
+const caseInsensitive = typeof navigator !== 'undefined' && /win/i.test(navigator.platform)
+/** Same case rule as the Rust scanner: Windows paths compare case-insensitively. */
+export const ignoredKey = (path: string): string => (caseInsensitive ? path.toLowerCase() : path)
+const isUnder = (path: string, parent: string) => ignoredKey(path).startsWith(ignoredKey(parent) + '/')
+
+/** Adds root-relative folders; duplicates and children of an already ignored folder are dropped. */
+export function addIgnoredFolders(current: readonly string[], additions: readonly string[]): string[] {
+  const all = [...current, ...additions]
+  const unique = [...new Map(all.map((p) => [ignoredKey(p), p])).values()]
+  return unique.filter((p) => !unique.some((other) => isUnder(p, other)))
+}
+/** Keep only well-formed strings from restored sessions; Rust validates the paths before use. */
+export const normalizeIgnoredFolders = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((p): p is string => typeof p === 'string' && p.length > 0) : []

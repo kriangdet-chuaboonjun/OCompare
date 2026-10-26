@@ -14,10 +14,10 @@
  <Applications><Application Id="OCompare" Executable="resources\explorer\OCompare.Launcher.exe" uap10:RuntimeBehavior="win32App" uap10:TrustLevel="mediumIL">
   <uap:VisualElements AppListEntry="none" DisplayName="OCompare" Description="File and folder comparison" BackgroundColor="transparent" Square150x150Logo="resources\explorer\Assets\Square150x150Logo.png" Square44x44Logo="resources\explorer\Assets\Square44x44Logo.png" />
   <Extensions>
-   <com:Extension Category="windows.comServer"><com:ComServer><com:SurrogateServer DisplayName="OCompare Explorer commands"><com:Class Id="41D4B7A8-0EB1-48F0-BE33-66B743771261" Path="resources\explorer\OCompare.Explorer.dll" ThreadingModel="STA" /></com:SurrogateServer></com:ComServer></com:Extension>
+   <com:Extension Category="windows.comServer"><com:ComServer><com:SurrogateServer DisplayName="OCompare Explorer commands"><com:Class Id="41D4B7A8-0EB1-48F0-BE33-66B743771261" Path="resources\explorer\OCompare.Explorer.dll" ThreadingModel="STA" /><com:Class Id="41D4B7AB-0EB1-48F0-BE33-66B743771261" Path="resources\explorer\OCompare.Explorer.dll" ThreadingModel="STA" /></com:SurrogateServer></com:ComServer></com:Extension>
    <desktop4:Extension Category="windows.fileExplorerContextMenus"><desktop4:FileExplorerContextMenus>
     <desktop5:ItemType Type="*"><desktop5:Verb Id="OCompareFiles" Clsid="41D4B7A8-0EB1-48F0-BE33-66B743771261" /></desktop5:ItemType>
-    <desktop5:ItemType Type="Directory"><desktop5:Verb Id="OCompareFolders" Clsid="41D4B7A8-0EB1-48F0-BE33-66B743771261" /></desktop5:ItemType>
+    <desktop5:ItemType Type="Directory"><desktop5:Verb Id="OCompareFolders" Clsid="41D4B7AB-0EB1-48F0-BE33-66B743771261" /></desktop5:ItemType>
    </desktop4:FileExplorerContextMenus></desktop4:Extension>
   </Extensions>
  </Application></Applications>

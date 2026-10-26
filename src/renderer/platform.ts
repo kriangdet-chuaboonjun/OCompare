@@ -57,8 +57,8 @@ export const api: OCompareApi = {
 }
 
 export const folderApi: FolderApi = {
-  watchFolders: (leftPath, rightPath) => command('watch_folders', { leftPath, rightPath }),
-  stopWatching: () => command('stop_folder_watch'),
+  watchFolders: (tabId, leftPath, rightPath) => command('watch_folders', { tabId, leftPath, rightPath }),
+  stopWatching: tabId => command('stop_folder_watch', { tabId }),
   onChanged: callback => listen('folder:changed', ({ payload }) => callback(payload as import('../shared/folders').FolderWatchEvent)),
   openDirectory: async () => {
     const path = await open({ directory: true, multiple: false })
@@ -70,7 +70,7 @@ export const folderApi: FolderApi = {
   loadSessions: () => command('load_folder_sessions'),
   saveSessions: store => command('save_folder_sessions', { store }),
   diskSpace: path => command('folder_disk_space', { path }),
-  planCopy: (leftPath, rightPath, direction, paths, requestId) => command('plan_folder_copy', { leftPath, rightPath, direction, paths, requestId }),
+  planCopy: (leftPath, rightPath, direction, paths, requestId, ignoredFolders) => command('plan_folder_copy', { leftPath, rightPath, direction, paths, requestId, ignoredFolders }),
   executeCopy: (planId, requestId) => command('execute_folder_copy', { planId, requestId }),
   discardCopy: planId => command('discard_folder_copy', { planId }),
   onCopyProgress: callback => listen<CopyProgress>('folder:copy-progress', ({ payload }) => callback(payload))

@@ -45,7 +45,7 @@ For an authorized full release, commit only relevant tested changes and push the
 npm run publish:release
 ```
 
-The publisher uploads five assets to a draft, verifies downloaded bytes, then publishes. If it fails, inspect the retained draft and report its URL/reason. An existing release or draft stops the publisher; do not delete or overwrite it automatically. GitHub's release-by-tag endpoint does not expose an unpublished draft: inspect drafts through the releases list and numeric release ID.
+The publisher uploads five assets to a draft with progress, verifies downloaded bytes, then publishes. If it fails, inspect the retained draft and report its URL/reason. With the same source commit and artifacts, continue using `npm run publish:release -- --resume-draft`: completed files are verified and skipped; missing files and incomplete upload placeholders are retried. Published releases, mismatched bytes, and drafts for another commit stop the command. Do not delete a release/draft or overwrite complete assets. GitHub's release-by-tag endpoint does not expose an unpublished draft: inspect drafts through the releases list and numeric release ID.
 
 ## Verify the outcome
 

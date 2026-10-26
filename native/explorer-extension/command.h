@@ -4,5 +4,5 @@
 #include <atomic>
 extern std::atomic<long> g_references;
 extern HMODULE g_module;
-enum class CommandMode{Root,Select,Compare};
+enum class CommandMode{Root,Select,Compare,Folder};
 HRESULT CreateCommand(CommandMode mode,REFIID iid,void** result);

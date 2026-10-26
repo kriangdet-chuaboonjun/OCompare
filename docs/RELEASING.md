@@ -50,7 +50,15 @@ npm run publish:release
 
 To run tests, build, validate, and publish together after pushing the release commit, use `npm run release:win`.
 
-The publisher checks the clean checkout, remote commit, public visibility, existing release tags, checksums, and cryptographic signature. It uploads all files to a draft, downloads them to compare bytes, then publishes the draft as the latest release. An existing release is never overwritten. On upload or verification failure, keep the draft for inspection; remove that failed draft explicitly before retrying. Prereleases are not published by this script.
+The publisher checks the clean checkout, remote commit, public visibility, existing release tags, checksums, and cryptographic signature. It creates a draft, uploads two files at a time with progress reports, downloads them to compare bytes, then publishes the draft as the latest release. An existing published release is never overwritten. Uploads allow up to 30 minutes per file and stop if no data is transferred for five minutes. GitHub credentials are passed to Windows' built-in curl over stdin, never command-line arguments or files. Prereleases are not published by this script.
+
+If an upload fails, retain the same source commit and local artifacts, inspect the draft, then continue with:
+
+```powershell
+npm run publish:release -- --resume-draft
+```
+
+Resume requires a draft targeting the exact current commit. It verifies and skips completed files, retries missing files, and removes only incomplete `starter` upload placeholders for the expected filenames. It does not resume partway through a single file: a failed file starts again. Wrong bytes, unexpected assets, a published release, or a changed source commit stop the command without overwriting valid assets. `--dry-run` performs local validation only; `--help` lists the options.
 
 Public visibility is a one-time repository setting and is not changed by the publication script. Before making a private repository public, scan the entire Git history and all files being published for credentials. Stop and remediate any findings before changing visibility.
 
