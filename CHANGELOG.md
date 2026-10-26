@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.4.10] - 2026-10-26
+
+- Fix "Check for updates" failing with "Command is_portable not allowed by ACL": the update-related commands are now permitted for the main window.
+
 ## [0.4.9] - 2026-10-26
 
 - Fix the Folder tab strip so the close button stays attached to its tab and the tabs look like the Files tabs.

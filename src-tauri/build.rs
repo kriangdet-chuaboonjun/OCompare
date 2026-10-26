@@ -14,6 +14,8 @@ fn main() {
                 "restore_backup",
                 "get_startup_files",
                 "get_startup_comparison",
+                "is_portable",
+                "open_release_page",
                 "compare_folders",
                 "cancel_folder_compare",
                 "load_folder_sessions",

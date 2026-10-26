@@ -10,7 +10,7 @@
     "core:window:allow-set-theme",
     "core:window:allow-scale-factor", "dialog:allow-open", "dialog:allow-save", "dialog:allow-confirm",
     "allow-read-file", "allow-save-file", "allow-watch-file", "allow-get-startup-files",
-    "allow-get-startup-comparison",
+    "allow-get-startup-comparison", "allow-is-portable", "allow-open-release-page",
     "allow-watch-folders", "allow-stop-folder-watch",
     "allow-validate-comparison-rules", "allow-normalize-comparison-pair",
     "allow-list-backup-history", "allow-read-backup-snapshot", "allow-restore-backup",
