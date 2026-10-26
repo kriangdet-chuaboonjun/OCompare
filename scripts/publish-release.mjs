@@ -7,7 +7,7 @@ import { releaseInfo, validateRelease, repository } from './release-artifacts.mj
 function run(command, args) {
   const result = spawnSync(command, args, { encoding: 'utf8', windowsHide: true })
   if (result.error) throw result.error
-  if (result.status !== 0) throw new Error(`${command} failed: ${result.stderr || result.stdout}`)
+  if (result.status !== 0) throw new Error(`${command} ${args[0]} failed: ${result.stderr || result.stdout}`)
   return result.stdout.trim()
 }
 
@@ -32,7 +32,10 @@ try {
     try {
       const notesFile = join(temp, 'notes.md'); await writeFile(notesFile, manifest.notes)
       run('gh', ['release', 'create', tag, ...files, '--repo', repository, '--target', target, '--title', `OCompare ${info.version}`, '--notes-file', notesFile, '--draft'])
-      const release = JSON.parse(run('gh', ['api', `repos/${repository}/releases/tags/${tag}`]))
+      // Draft tags are not exposed by GitHub's get-release-by-tag endpoint yet.
+      const drafts = JSON.parse(run('gh', ['api', '--paginate', '--slurp', `repos/${repository}/releases?per_page=100`])).flat()
+      const release = drafts.find(release => release.tag_name === tag && release.draft)
+      if (!release) throw new Error(`Draft ${tag} could not be found after upload`)
       // Verify uploaded bytes while the release is still a draft.
       for (const file of files) {
         const name = file.split(/[\\/]/).at(-1), asset = release.assets.find(asset => asset.name === name)
