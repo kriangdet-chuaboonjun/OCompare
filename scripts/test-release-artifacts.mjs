@@ -9,14 +9,14 @@ import { packageRelease, validateRelease } from './release-artifacts.mjs'
 test('packages immutable release links and validates every checksum before publication', async () => {
   const root = await mkdtemp(join(tmpdir(), 'ocompare-release-'))
   try {
-    await mkdir(join(root, 'src-tauri/target/release/bundle/nsis'), { recursive: true })
+    await mkdir(join(root, 'src-tauri/target/release/installer'), { recursive: true })
     await mkdir(join(root, 'src-tauri/explorer'), { recursive: true })
     await writeFile(join(root, 'package.json'), JSON.stringify({ version: '0.4.5' }))
     await writeFile(join(root, 'src-tauri/tauri.conf.json'), JSON.stringify({ version: '0.4.5', plugins: { updater: { pubkey: 'test-public-key' } } }))
     await writeFile(join(root, 'src-tauri/Cargo.toml'), '[package]\nversion = "0.4.5"\n')
     await writeFile(join(root, 'CHANGELOG.md'), '# Changelog\n\n## [0.4.5] - 2026-10-26\n\n- Online updates.\n')
     await writeFile(join(root, 'src-tauri/target/release/o-compare-rust.exe'), 'portable fixture')
-    const setup = join(root, 'src-tauri/target/release/bundle/nsis/OCompare_0.4.5_x64-setup.exe')
+    const setup = join(root, 'src-tauri/target/release/installer/OCompare-0.4.5-x64-setup.exe')
     await writeFile(setup, 'setup fixture'); await writeFile(setup + '.sig', 'signature-fixture')
     await packageRelease(root)
     const manifest = JSON.parse(await readFile(join(root, 'release/latest.json'), 'utf8'))

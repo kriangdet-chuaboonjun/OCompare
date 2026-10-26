@@ -30,7 +30,7 @@ npm run publish:release -- --dry-run
 node scripts/test-release-signature.mjs
 ```
 
-`build:win` retains the native Explorer integration build, builds signed NSIS updater artifacts, and generates these files under `release/`:
+`build:win` retains the native Explorer integration build, builds the app, compiles `packaging/windows/OCompare.iss` with Inno Setup 6 (`winget install JRSoftware.InnoSetup`), signs the setup with `tauri signer sign --app-version`, and generates these files under `release/`:
 
 - `OCompare-VERSION-portable.exe`
 - `OCompare-VERSION-x64-setup.exe`
@@ -56,6 +56,6 @@ Public visibility is a one-time repository setting and is not changed by the pub
 
 ## Update behavior and validation
 
-Only newer stable Windows x64 releases are offered. Startup failures stay quiet; manual checks show errors and support retry. Metadata requests time out after 30 seconds; downloads after 120 seconds. Download and install are separate so the final workspace guard runs after signature verification. The guard freezes editors and commands, drains pending operations, resolves every unsaved document using Save/Discard/Cancel, and refuses installation while folder jobs are running. NSIS restarts the installed application after update.
+Only newer stable Windows x64 releases are offered. Startup failures stay quiet; manual checks show errors and support retry. Metadata requests time out after 30 seconds; downloads after 120 seconds. Download and install are separate so the final workspace guard runs after signature verification. The guard freezes editors and commands, drains pending operations, resolves every unsaved document using Save/Discard/Cancel, and refuses installation while folder jobs are running. The updater starts the Inno setup with `/SILENT` (configured in `plugins.updater.windows.installerArgs`); Inno ignores the updater's NSIS switches, and the setup reopens OCompare when it sees `/UPDATE`.
 
 Validate a real update from an installed version and from a portable copy in Windows Sandbox or a VM before release. Cover UAC cancellation, failed/invalid downloads, unsaved Untitled documents, failed saves, active folder copy jobs, user settings, backup history, and Explorer integration. Automated browser tests substitute only the native download/process boundary; they do not prove installer behavior. Version 0.4.4 cannot bootstrap this feature automatically; install 0.4.5 manually once.

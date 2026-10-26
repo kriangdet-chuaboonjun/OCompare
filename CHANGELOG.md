@@ -2,9 +2,12 @@
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-10-26
+
 - The toolbar's **Install update x.y.z** button downloads and installs in one click.
 - Portable copies no longer install OCompare into Windows; **Get version x.y.z** opens the release download page instead.
 - Shorter update notice in the update dialog.
+- Setup now uses Inno Setup like OTokenUsage: per-user install without administrator permission, Thai or English, an update/repair/uninstall choice, desktop shortcut and launch options. Existing installs from the previous Setup (including the system-wide 0.4.5, which needs one administrator prompt) are removed first, keeping settings and history.
 
 ## [0.4.5] - 2026-10-26
 

@@ -5,7 +5,7 @@ description: "Use when preparing, building, or publishing an OCompare Windows re
 
 # OCompare release + publish
 
-Use the repository's signed NSIS release pipeline. Run commands from the Git root and respond to the user in Thai. Creating or editing this skill does not request a new application release.
+Use the repository's signed Inno Setup release pipeline. Run commands from the Git root and respond to the user in Thai. Creating or editing this skill does not request a new application release.
 
 Read [docs/RELEASING.md](../../../docs/RELEASING.md), `package.json`, and the current release scripts before execution; those files own the implementation. Repository: `kriangdet-chuaboonjun/OCompare`.
 

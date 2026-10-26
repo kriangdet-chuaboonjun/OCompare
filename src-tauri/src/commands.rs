@@ -315,10 +315,10 @@ pub async fn restore_backup(
     blocking(move || writes.with_store(|store| store.restore(Path::new(&path), &id))).await
 }
 
-/// Setup places uninstall.exe beside the app; a portable copy must not run Setup to update.
+/// Setup places its uninstaller beside the app; a portable copy must not run Setup to update.
 #[tauri::command]
 pub fn is_portable() -> bool {
-    std::env::current_exe().map_or(true, |exe| !exe.with_file_name("uninstall.exe").is_file())
+    std::env::current_exe().map_or(true, |exe| !exe.with_file_name("unins000.exe").is_file())
 }
 
 /// The URL is fixed here so the renderer cannot open arbitrary targets.

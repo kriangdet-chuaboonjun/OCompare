@@ -13,7 +13,8 @@ const temp = await mkdtemp(join(tmpdir(), 'ocompare-signature-'))
 try {
   assert.equal(verify(setup, signature).status, 0, 'actual release signature must verify')
   const mismatchedConfig = join(temp, 'version-mismatch.json')
-  await writeFile(mismatchedConfig, JSON.stringify({ ...info.config, version: '0.4.6' }))
+  const differentVersion = info.version === '0.0.0' ? '0.0.1' : '0.0.0'
+  await writeFile(mismatchedConfig, JSON.stringify({ ...info.config, version: differentVersion }))
   assert.notEqual(verify(setup, signature, mismatchedConfig).status, 0, 'valid signature for another release version must fail')
   const corrupted = join(temp, 'corrupted.exe'), bytes = await readFile(setup); bytes[bytes.length - 1] ^= 1
   await writeFile(corrupted, bytes)

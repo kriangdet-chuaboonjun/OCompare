@@ -31,7 +31,7 @@ export function mountUpdater(currentVersion: string, api: UpdaterApi, guard: Ins
     else progress.removeAttribute('value')
     notice.textContent = state.portable
       ? 'This is a portable copy, so it is not changed. Your browser opens the download page for the new version.'
-      : 'Windows may ask for administrator permission. OCompare will close and reopen.'
+      : 'OCompare will close, update and reopen.'
     badge.hidden = !state.version
     badge.textContent = state.portable ? `Get version ${state.version}` : `Install update ${state.version}`
     close.disabled = busy; check.disabled = busy; install.disabled = busy

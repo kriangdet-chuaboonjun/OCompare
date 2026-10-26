@@ -26,7 +26,7 @@ export async function packageRelease(root = process.cwd()) {
   if (!changelog.includes(heading)) throw new Error(`Missing changelog for ${version}`)
   const notes = changelog.split(heading)[1].split('\n').slice(1).join('\n').split('\n## ')[0].trim()
   if (!notes) throw new Error('Release notes cannot be empty')
-  const setup = join(root, `src-tauri/target/release/bundle/nsis/OCompare_${version}_x64-setup.exe`)
+  const setup = join(root, `src-tauri/target/release/installer/${names[1]}`)
   const signature = (await readFile(setup + '.sig', 'utf8')).trim()
   if (!signature) throw new Error('Missing updater signature')
   await mkdir(directory, { recursive: true })
