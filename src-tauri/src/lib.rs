@@ -25,6 +25,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(std::sync::Arc::new(watcher::WatchService::default()))
         .manage(std::sync::Arc::new(folders::FolderJobs::default()))
         .manage(std::sync::Arc::new(folder_copy::CopyService::default()))

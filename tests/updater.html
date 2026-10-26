@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><link rel="stylesheet" href="/src/renderer/styles.css"><title>Updater test</title></head>
+<body><div id="workspace"><button id="check-updates">Check for updates</button><button id="update-available" hidden>Update available</button><textarea>Unsaved work</textarea></div>
+<script type="module">
+import { mountUpdater } from '/src/renderer/updateDialog.ts'
+import { WorkspaceInstallGuard } from '/src/shared/installGuard.ts'
+import { unsavedChoice } from '/src/renderer/unsavedDialog.ts'
+import '/src/renderer/tabs.css'
+window.installCount = 0; window.downloadCount = 0
+const guard = new WorkspaceInstallGuard({
+ busy: () => false,
+ lock: value => { document.getElementById('workspace').inert = value },
+ settle: async () => {},
+ resolveUnsaved: async () => (await unsavedChoice('Untitled')) === 'discard',
+})
+window.updates = mountUpdater('0.4.5', { async check() { return {
+ version: '0.4.6', body: '<img src=x onerror=alert(1)>\nFix comparison issues',
+ async download(callback) { window.downloadCount++; callback({event:'Started',data:{contentLength:100}}); callback({event:'Progress',data:{chunkLength:100}}) },
+ async install() { window.installCount++ }, async close() {},
+} } }, guard)
+</script></body></html>

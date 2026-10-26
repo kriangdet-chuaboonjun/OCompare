@@ -1,0 +1,13 @@
+.update-dialog { box-sizing:border-box; width:min(540px,calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; padding:22px; border:1px solid var(--dialog-border); border-radius:6px; background:var(--surface); color:var(--text); }
+.update-dialog::backdrop { background:#0007; }
+.update-dialog h2 { font-size:18px; margin:0 0 16px; }
+.update-dialog p { font-size:13px; line-height:1.55; overflow-wrap:anywhere; }
+.update-notes { font:13px/1.55 system-ui,sans-serif; white-space:pre-wrap; overflow-wrap:anywhere; max-height:220px; overflow:auto; background:var(--chrome); border:1px solid var(--border); padding:12px; }
+.update-notice { color:var(--muted); }
+.update-dialog progress { width:100%; accent-color:var(--accent); }
+.update-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:20px; }
+.update-actions button { font:inherit; font-size:13px; cursor:pointer; border:1px solid var(--border); border-radius:3px; padding:7px 12px; color:var(--text); background:var(--chrome); }
+.update-actions .update-primary { background:var(--accent); color:var(--on-accent); }
+.update-actions button:disabled { opacity:.6; cursor:default; }
+.update-actions button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+#statusbar #update-available { margin-left:auto; background:transparent; border:0; color:var(--accent); cursor:pointer; font:inherit; }

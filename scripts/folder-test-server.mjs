@@ -4,7 +4,7 @@ import { resolve, sep } from 'node:path'
 import { createServer } from 'vite'
 
 /** Browser transport calls the same Rust services, scoped to one disposable fixture root. */
-export async function startFolderTestServer(root, port = 1422) {
+export async function startFolderTestServer(root, port = 1422, options = {}) {
   const allow = (path) => {
     if (
       typeof path !== 'string' ||
@@ -63,6 +63,8 @@ export async function startFolderTestServer(root, port = 1422) {
         name: 'rust-folder-workspace-test',
         enforce: 'pre',
         resolveId(source, importer) {
+          if (options.updater && source === './updateNative' && importer?.replaceAll('\\', '/').endsWith('/src/renderer/main.ts'))
+            return resolve('tests/updater-native.ts')
           if (source === './platform' && importer?.replaceAll('\\', '/').endsWith('/src/renderer/main.ts'))
             return resolve('tests/folder-platform.ts')
         },

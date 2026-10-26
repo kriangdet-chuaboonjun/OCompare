@@ -25,6 +25,8 @@ export class FolderController {
   private store: SessionStore = { version: 1, sessions: [], history: [] }
   private storeUsable = true
   private disposed = false
+  private actionsSuspended = false
+  private pendingActions = new Set<Promise<unknown>>()
   private sessionQueue: Promise<unknown> = Promise.resolve()
   private watchGeneration = 0
   private watchRoots = ''
@@ -86,8 +88,10 @@ export class FolderController {
       })
   }
   private safe(work: () => Promise<unknown> | void): void {
+    if (this.actionsSuspended) return
     try {
-      void Promise.resolve(work()).catch((e) => this.error(e))
+      const task = Promise.resolve(work()).catch((e) => this.error(e)).finally(() => this.pendingActions.delete(task))
+      this.pendingActions.add(task)
     } catch (e) {
       this.error(e)
     }
@@ -99,6 +103,11 @@ export class FolderController {
   }
   get busy(): boolean {
     return this.current !== null
+  }
+  /** Freeze new commands while pending native dialogs and writes drain before an update. */
+  suspendActions(value: boolean): void { this.actionsSuspended = value }
+  async settleActions(): Promise<void> {
+    await Promise.all([...this.pendingActions, this.sessionQueue])
   }
   private async command(command: string): Promise<void> {
     if (command === 'compare' || command === 'refresh') await this.compare()
@@ -201,6 +210,7 @@ export class FolderController {
     }
   }
   async compare(): Promise<void> {
+    if (this.actionsSuspended) return
     if (this.phase === 'copy') return
     const left = this.roots.left.trim(),
       right = this.roots.right.trim()

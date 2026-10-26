@@ -2,6 +2,7 @@
 export async function unsavedChoice(label: string): Promise<'save' | 'discard' | 'cancel'> {
   const dialog = document.createElement('dialog')
   dialog.className = 'unsaved-dialog'
+  dialog.setAttribute('aria-label', 'Unsaved changes')
   const heading = document.createElement('h2'); heading.textContent = 'Unsaved changes'
   const message = document.createElement('p'); message.textContent = `Save changes to ${label}?`
   const actions = document.createElement('div'); actions.className = 'unsaved-actions'

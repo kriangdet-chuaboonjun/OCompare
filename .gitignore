@@ -6,6 +6,11 @@ src-tauri/gen/
 test-results/
 .cache/
 .env
+.env.*
+*.key
+*.pfx
+*.p12
+*.dpapi
 native/build/
 packaging/windows/generated/
 src-tauri/explorer/

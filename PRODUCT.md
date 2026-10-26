@@ -54,7 +54,7 @@ web
 
 - มี Windows Setup และ portable executable โดยต้องมี WebView2; การติดตั้ง Setup ปัจจุบันเป็นแบบทุกผู้ใช้และต้องใช้สิทธิ์ผู้ดูแลระบบ
 - การลงทะเบียนเมนู Windows Explorer สำหรับใช้งานจริงต้องมี MSIX ที่ลงนามและ Windows เชื่อถือ ห้ามรับรองว่าเมนูติดตั้งอัตโนมัติในทุกสภาพแวดล้อม
-- README ระบุว่ายังไม่มี code signing ของตัวแอปและไม่มี auto-update
+- ตั้งแต่ 0.4.5 มีระบบอัปเดตจาก GitHub Releases พร้อมตรวจลายเซ็น updater; ยังไม่มี Windows Authenticode signing ของตัวแอป
 
 ## Brand Commitments
 

@@ -11,6 +11,11 @@ declare global {
 window.testConfirm = false
 window.testDirty = false
 window.compareDelayMs = 0
+const watchedFiles = new Map<string, string>()
+const fileChangedListeners = new Set<(documentId: string) => void>()
+export function emitFileChanged(path: string): void {
+  for (const [id, watchedPath] of watchedFiles) if (watchedPath === path) fileChangedListeners.forEach(listener => listener(id))
+}
 export const getStartupComparison = async () => null
 
 async function transport<T>(action: string, args: object): Promise<T> {
@@ -30,8 +35,8 @@ export const api: OCompareApi = {
   saveDialog: async () => null,
   readFile: (path) => transport('workspace', { action: 'readFile', path }),
   saveFile: (path, text, encoding, bom) => transport('workspace', { action: 'saveFile', path, text, encoding, bom }),
-  watchFile: async () => {},
-  onFileChanged: () => {},
+  watchFile: async (id, path) => { if (path) watchedFiles.set(id, path); else watchedFiles.delete(id) },
+  onFileChanged: listener => { fileChangedListeners.add(listener) },
   getStartupFiles: async () => [],
   setDirty: (dirty) => {
     window.testDirty = dirty

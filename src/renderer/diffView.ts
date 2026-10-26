@@ -32,6 +32,7 @@ export class DiffView {
   private viewMode: ViewMode = 'all'
   private readonly filter: LineFilter
   private recompareKick = false
+  private editingSuspended = false
   private pairViewModel: monaco.editor.IDiffEditorViewModel | undefined
 
   constructor(host: HTMLElement, services?: monaco.editor.IEditorOverrideServices) {
@@ -150,8 +151,11 @@ export class DiffView {
     this.emit()
   }
   private applyReadOnly(): void {
-    this.editor.updateOptions({ originalEditable: !this.sides.left.path?.startsWith('history://'), readOnly: Boolean(this.sides.right.path?.startsWith('history://')) })
+    this.editor.updateOptions({ originalEditable: !this.editingSuspended && !this.sides.left.path?.startsWith('history://'), readOnly: this.editingSuspended || Boolean(this.sides.right.path?.startsWith('history://')) })
   }
+
+  /** Freeze both editors through the final save/install gate, preserving history read-only state. */
+  suspendEditing(value: boolean): void { this.editingSuspended = value; this.applyReadOnly() }
 
   markSaved(side: Side, size: number, mtimeMs: number, savedVersion?: number): void {
     this.markDocumentSaved(this.sides[side], size, mtimeMs, savedVersion)

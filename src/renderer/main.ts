@@ -5,6 +5,9 @@ import { RegexDiffAdapter } from './regexDiff'
 import { openComparisonRules } from './comparisonRules'
 import { openBackupHistory } from './backupHistory'
 import { unsavedChoice } from './unsavedDialog'
+import { mountUpdater } from './updateDialog'
+import { updaterApi } from './updateNative'
+import { WorkspaceInstallGuard } from '../shared/installGuard'
 import * as monaco from 'monaco-editor'
 import type { FileData, Side } from '../shared/types'
 import type { FolderEntry } from '../shared/folders'
@@ -38,6 +41,8 @@ const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => r
 const head = (side: Side) => $<HTMLElement>(`.side-head[data-side="${side}"]`)
 const status = (msg: string) => ($<HTMLElement>('#st-msg').textContent = msg)
 let mode: 'files' | 'folders' = 'files'
+let installationLocked = false
+const pendingActions = new Set<Promise<unknown>>()
 const folders = new FolderController(document.getElementById('folder-panel')!, folderApi, openFolderEntry, () => {
   renderHeaders()
   renderStatus()
@@ -49,7 +54,11 @@ folders.onRegexRules = async () => {
 }
 /** ป้องกัน unhandled rejection จาก native dialogs, events และ commands */
 const run = (action: () => void | Promise<unknown>): void => {
-  try { Promise.resolve(action()).catch((error) => status(toError(error).message)) }
+  if (installationLocked) return
+  try {
+    const task = Promise.resolve(action()).catch((error) => status(toError(error).message)).finally(() => pendingActions.delete(task))
+    pendingActions.add(task)
+  }
   catch (error) { status(toError(error).message) }
 }
 
@@ -319,12 +328,17 @@ async function reload(): Promise<void> {
   }
 }
 
-api.onFileChanged(documentId => { run(async () => {
-  const doc = tabs.documents().find(doc => doc.id === documentId)
-  if (!doc?.path) return
-  if (documentDirty(doc)) status(`${doc.path} changed on disk (you have unsaved edits; press Reload to discard them)`)
-  else { await reloadPath(doc.path); status(`Reloaded ${doc.path} (changed on disk)`) }
-}) })
+const deferredFileChanges = new Set<string>()
+function fileChanged(documentId: string): void {
+  if (installationLocked) { deferredFileChanges.add(documentId); return }
+  run(async () => {
+    const doc = tabs.documents().find(doc => doc.id === documentId)
+    if (!doc?.path) return
+    if (documentDirty(doc)) status(`${doc.path} changed on disk (you have unsaved edits; press Reload to discard them)`)
+    else { await reloadPath(doc.path); status(`Reloaded ${doc.path} (changed on disk)`) }
+  })
+}
+api.onFileChanged(fileChanged)
 
 // ---------- commands ----------
 const commands: Record<string, () => void | Promise<unknown>> = {
@@ -415,6 +429,7 @@ for (const side of SIDES) {
 }
 function cycleTab(direction: number): void { const index = tabs.tabs.indexOf(tabs.active); tabs.activate(tabs.tabs[(index + direction + tabs.tabs.length) % tabs.tabs.length].id) }
 window.addEventListener('keydown', (e) => {
+  if (installationLocked) return
   if (document.querySelector('dialog[open]')) return
   if (mode === 'files' && e.ctrlKey && !e.altKey && !document.querySelector('dialog[open]')) {
     if (e.key.toLowerCase() === 't') { e.preventDefault(); tabs.create(); return }
@@ -460,6 +475,7 @@ function sideAt(x: number): Side {
 
 /** ใช้ native file paths จาก Tauri แทน Electron webUtils */
 function handleDrop(event: DropEvent): void {
+  if (installationLocked) return
   if (mode === 'folders') return
   SIDES.forEach((side) => head(side).classList.toggle('drop-target',
     (event.type === 'enter' || event.type === 'over') && side === sideAt(event.x)))
@@ -485,8 +501,29 @@ $<HTMLImageElement>('#logo').src = logoUrl
 refreshToggles()
 renderHeaders()
 renderStatus()
+const updates = mountUpdater(__APP_VERSION__, updaterApi, new WorkspaceInstallGuard({
+  busy: () => folders.busy,
+  lock: locked => {
+    installationLocked = locked
+    folders.suspendActions(locked)
+    view.suspendEditing(locked)
+    for (const id of ['toolbar', 'file-tabs', 'panes-head', 'editor', 'folder-panel']) document.getElementById(id)!.inert = locked
+    if (!locked) {
+      const changed = [...deferredFileChanges]; deferredFileChanges.clear()
+      changed.forEach(fileChanged)
+      renderHeaders()
+    }
+  },
+  settle: async () => {
+    await Promise.all([...pendingActions, ...pendingSaves.values(), folders.settleActions()])
+  },
+  resolveUnsaved: () => resolveUnsaved(tabs.documents()),
+}))
+// Browser-only development/tests do not have native IPC and never contact the release service.
+if ('__TAURI_INTERNALS__' in window) void updates.check(false)
 run(async () => {
   await initializePlatform(handleDrop, status, async () => {
+    if (installationLocked) return false
     if (!folders.busy) return resolveUnsaved(tabs.documents())
     status('A folder job is running. Use Stop and wait for completion before closing.')
     return false
