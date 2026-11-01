@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.11] - 2026-11-01
+
+- Redesign the main window (Fluent Compact): a single 44px command bar with segmented Files/Folders and All/Diffs/Context groups, icon-only secondary commands, compact file headers with encoding and line-ending badges, rounded tabs, and a refreshed neutral Light/Dark palette.
+- Tidy the Folders toolbar so its buttons are no longer clipped and stay on one row at narrow widths.
+
 ## [0.4.10] - 2026-10-26
 
 - Fix "Check for updates" failing with "Command is_portable not allowed by ACL": the update-related commands are now permitted for the main window.
