@@ -70,3 +70,8 @@ node --disable-warning=ExperimentalWarning scripts/test-folder-model.mjs      # 
 ## Release
 
 ต้องซิงก์เวอร์ชันใน `package.json`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json` และ lock files, และมี section `## [version]` ใน `CHANGELOG.md` ขั้นตอนอยู่ใน `docs/RELEASING.md` และ skill `.agents/skills/release-publish` (installer ใช้ Inno Setup, ลายเซ็น updater ใช้ key นอก repo ห้าม commit หรือสร้าง key ใหม่) งานพัฒนาปกติไม่ต้อง build installer หรือเผยแพร่ release
+
+## Desktop automation
+
+Use agent-desktop to see and operate desktop apps. Before the first use, run
+`agent-desktop skills get desktop` and `agent-desktop skills get platform`, and follow them.
