@@ -88,7 +88,7 @@ export function defineThemes(): void {
       { token: 'predefined.sql', foreground: 'E6B6FF' },
     ],
     colors: {
-      'editor.background': '#1e2228',
+      'editor.background': '#272727',
       'editor.foreground': '#e4e8ef',
       'editorLineNumber.foreground': '#bac5d4',
       'diffEditor.removedLineBackground': '#542b32',
@@ -100,8 +100,8 @@ export function defineThemes(): void {
       'diffEditorGutter.insertedLineBackground': '#6c3540',
       'diffEditorOverview.removedForeground': '#ff8794',
       'diffEditorOverview.insertedForeground': '#ff8794',
-      'diffEditor.unchangedRegionBackground': '#272f3b',
-      'editor.lineHighlightBackground': '#28313e',
+      'diffEditor.unchangedRegionBackground': '#2d2d2d',
+      'editor.lineHighlightBackground': '#2f2f2f',
       'editor.selectionBackground': '#285783',
       'editor.inactiveSelectionBackground': '#354f6a',
       'editor.selectionHighlightBackground': '#497ca655'
