@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.12] - 2026-11-02
+
 - Add Structural compare: the new toolbar button opens a read-only tab that compares canonical JSON, XML and CSV (sorted keys or attributes, normalized whitespace, empty elements, delimiters and quoting), so formatting-only differences disappear. Press it again on the original tab to refresh.
+- Drop folders onto the Folders view: one folder fills the side under the pointer, two fill both sides, and dropped files are ignored.
+- Show the current difference section and the total (for example 2 / 5) between Prev Section and Next Section.
 
 ## [0.4.11] - 2026-11-01
 
