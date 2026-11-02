@@ -2,6 +2,7 @@ import * as monaco from 'monaco-editor'
 import type { FileData, Side } from '../shared/types'
 import { languageForPath } from './language'
 import { LineFilter } from './lineFilter'
+import { isVirtualPath } from './structural'
 import { editorTheme } from './theme'
 
 export type ViewMode = 'all' | 'diffs' | 'context'
@@ -151,7 +152,7 @@ export class DiffView {
     this.emit()
   }
   private applyReadOnly(): void {
-    this.editor.updateOptions({ originalEditable: !this.editingSuspended && !this.sides.left.path?.startsWith('history://'), readOnly: this.editingSuspended || Boolean(this.sides.right.path?.startsWith('history://')) })
+    this.editor.updateOptions({ originalEditable: !this.editingSuspended && !isVirtualPath(this.sides.left.path), readOnly: this.editingSuspended || isVirtualPath(this.sides.right.path) })
   }
 
   /** Freeze both editors through the final save/install gate, preserving history read-only state. */
@@ -374,7 +375,7 @@ export class DiffView {
   /** Selection on the focused side first, otherwise the section under the cursor. */
   copy(from: Side): boolean {
     const to: Side = from === 'left' ? 'right' : 'left'
-    if (this.sides[to].path?.startsWith('history://')) return false
+    if (isVirtualPath(this.sides[to].path)) return false
     const copied = (this.focused === from && this.copySelection(from)) || this.copySection(from)
     if (copied) this.recompareNow()
     return copied

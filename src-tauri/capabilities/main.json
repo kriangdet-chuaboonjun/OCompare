@@ -12,7 +12,7 @@
     "allow-read-file", "allow-save-file", "allow-watch-file", "allow-get-startup-files",
     "allow-get-startup-comparison", "allow-is-portable", "allow-open-release-page",
     "allow-watch-folders", "allow-stop-folder-watch",
-    "allow-validate-comparison-rules", "allow-normalize-comparison-pair",
+    "allow-validate-comparison-rules", "allow-normalize-comparison-pair", "allow-canonicalize-structural",
     "allow-list-backup-history", "allow-read-backup-snapshot", "allow-restore-backup",
     "allow-compare-folders", "allow-cancel-folder-compare",
     "allow-load-folder-sessions", "allow-save-folder-sessions", "allow-folder-disk-space", "allow-folder-path-kinds",

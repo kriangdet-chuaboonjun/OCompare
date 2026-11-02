@@ -2,6 +2,7 @@ import './monacoSetup'
 import './tabs.css'
 import { FileTabs, documentDirty, documentKey, type FileTab } from './fileTabs'
 import { RegexDiffAdapter } from './regexDiff'
+import { detectFormat, editorLanguage, isVirtualPath, structuralPath, virtualKind } from './structural'
 import { openComparisonRules } from './comparisonRules'
 import { openBackupHistory } from './backupHistory'
 import { unsavedChoice } from './unsavedDialog'
@@ -11,7 +12,7 @@ import { WorkspaceInstallGuard } from '../shared/installGuard'
 import * as monaco from 'monaco-editor'
 import type { FileData, Side } from '../shared/types'
 import type { FolderEntry } from '../shared/folders'
-import { api, folderApi, comparisonRulesApi, backupApi, confirm, getStartupComparison, initializePlatform, setTitle, toError, type DropEvent } from './platform'
+import { api, folderApi, comparisonRulesApi, structuralApi, backupApi, confirm, getStartupComparison, initializePlatform, setTitle, toError, type DropEvent } from './platform'
 import { FolderController } from './folderController'
 import { FolderTabs } from './folderTabs'
 import { SessionStorage } from './folderSessions'
@@ -107,7 +108,7 @@ function renderTabs(): void {
     }
     const names = SIDES.map(side => {
       const path = tab.sides[side].path
-      return `${path?.split(/[\\/]/).pop() || 'Untitled'}${path?.startsWith('history://') ? ' [History]' : ''}`
+      return `${path?.split(/[\\/]/).pop() || 'Untitled'}${virtualKind(path) ? ` [${virtualKind(path)}]` : ''}`
     })
     label.textContent = `${SIDES.some(side => documentDirty(tab.sides[side])) ? '● ' : ''}${names.join(' ↔ ')}`
     label.title = SIDES.map(side => tab.sides[side].path || 'Untitled').join(' ↔ ')
@@ -153,16 +154,17 @@ function renderHeaders(): void {
     const h = head(side)
     const dirty = view.isDirty(side)
     const pathInput = $<HTMLInputElement>('.path', h)
-    const snapshot = Boolean(s.path?.startsWith('history://'))
+    const kind = virtualKind(s.path)
+    const snapshot = kind !== null
     pathInput.readOnly = snapshot
-    if (document.activeElement !== pathInput) pathInput.value = snapshot ? `${s.path!.split('/').pop()} [History — read-only]` : s.path ?? ''
+    if (document.activeElement !== pathInput) pathInput.value = snapshot ? `${s.path!.split('/').pop()} [${kind} — read-only]` : s.path ?? ''
     $<HTMLElement>('.dirty', h).textContent = dirty ? '● modified' : ''
     $<HTMLElement>('.mtime', h).textContent = fmtDate(s.mtimeMs)
     $<HTMLElement>('.size', h).textContent = fmtSize(s.size)
     $<HTMLSelectElement>('.lang', h).value = s.model.getLanguageId()
     $<HTMLElement>('.enc', h).textContent = (s.encoding + (s.bom ? ' BOM' : '')).toUpperCase()
     $<HTMLElement>('.eol', h).textContent = view.eolOf(side) === 'CRLF' ? 'PC' : 'UNIX'
-    $<HTMLButtonElement>('.save', h).disabled = !dirty || Boolean(s.path?.startsWith('history://'))
+    $<HTMLButtonElement>('.save', h).disabled = !dirty || snapshot
   }
   renderTabs()
   const anyDirty = tabs.documents().some(documentDirty)
@@ -238,7 +240,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(button => bu
   setMode(button.dataset.mode as 'files' | 'folders')
 }))
 window.addEventListener('pagehide', () => folderTabs.dispose(), { once: true })
-async function watchDocument(doc: SideState): Promise<void> { if (!doc.path?.startsWith('history://')) await api.watchFile(doc.id, doc.path) }
+async function watchDocument(doc: SideState): Promise<void> { if (!isVirtualPath(doc.path)) await api.watchFile(doc.id, doc.path) }
 
 /** Async reads are bound to the original tab and side; switching tabs is harmless. */
 async function loadFile(side: Side, path: string, tab: FileTab = tabs.active, ask = true): Promise<void> {
@@ -275,7 +277,7 @@ async function saveDocument(doc: SideState): Promise<boolean> {
 }
 async function performSave(doc: SideState): Promise<boolean> {
   const originalPath = doc.path
-  if (originalPath?.startsWith('history://')) { status('History snapshots are read-only'); return false }
+  if (isVirtualPath(originalPath)) { status(`${virtualKind(originalPath) === 'History' ? 'History snapshots' : 'Structural views'} are read-only`); return false }
   let path = originalPath
   if (!path) { path = await api.saveDialog(); if (!path) return false }
   if (doc.model.isDisposed()) return false
@@ -320,7 +322,7 @@ async function closeTab(tab: FileTab): Promise<void> {
 
 /** Reload matching shared models after an explicit restore, never overwrite edited text. */
 export async function reloadPath(path: string): Promise<void> {
-  if (path.startsWith('history://')) return
+  if (isVirtualPath(path)) return
   const doc = tabs.findDocument(path)
   if (!doc || documentDirty(doc)) return
   const version = doc.model.getAlternativeVersionId()
@@ -332,7 +334,7 @@ export async function reloadPath(path: string): Promise<void> {
 async function reload(): Promise<void> {
   const docs = [...new Set(SIDES.map(side => view.sides[side]))]
   for (const doc of docs) {
-    if (!doc.path || doc.path.startsWith('history://') || !await resolveUnsaved([doc])) continue
+    if (!doc.path || isVirtualPath(doc.path) || !await resolveUnsaved([doc])) continue
     const version = doc.model.getAlternativeVersionId()
     const request = (loadRequests.get(doc) ?? 0) + 1
     loadRequests.set(doc, request)
@@ -381,12 +383,47 @@ const commands: Record<string, () => void | Promise<unknown>> = {
     const rules = await openComparisonRules({ rules: tab.regexRules, ...comparisonRulesApi })
     if (rules && tabs.tabs.includes(tab)) { tab.regexRules = rules; tabs.changed() }
   },
+  structural: () => openStructural(),
   history: () => {
     const path = getSelectedHistoryPath()
-    if (!path || path.startsWith('history://')) { status('Select a saved file to view History'); return }
+    if (!path || isVirtualPath(path)) { status('Select a saved file to view History'); return }
     return showHistory(path)
   },
   save: () => saveFile(view.focusedSide)
+}
+
+let structuralBusy = false
+/** Compare the canonical form of both sides in a read-only tab; sources and their tab are never touched. */
+async function openStructural(): Promise<void> {
+  const tab = tabs.active
+  if (SIDES.some(side => isVirtualPath(tab.sides[side].path))) { status('Press Structural on the original comparison tab'); return }
+  if (structuralBusy) return
+  structuralBusy = true
+  try {
+    const [left, right] = SIDES.map(side => ({ path: tab.sides[side].path, text: view.textOf(side) }))
+    const detected = detectFormat(left, right)
+    if ('error' in detected) { status(detected.error); return }
+    const { format } = detected
+    status('Building structural view…')
+    const results = await Promise.allSettled([left, right].map(source => structuralApi.canonicalize(source.text, format)))
+    const failed = results.findIndex(result => result.status === 'rejected')
+    if (failed >= 0) throw new Error(`${failed === 0 ? 'Left' : 'Right'}: ${toError((results[failed] as PromiseRejectedResult).reason).message}`)
+    if (!tabs.tabs.includes(tab)) return
+    const texts = results.map(result => (result as PromiseFulfilledResult<string>).value)
+    const files: FileData[] = SIDES.map((side, index) => ({
+      path: structuralPath(format, side, { path: tab.sides[side].path, id: tab.sides[side].id }),
+      text: texts[index], encoding: 'utf-8', bom: false, eol: 'LF', size: new TextEncoder().encode(texts[index]).length, mtimeMs: Date.now(),
+    }))
+    const target = tabs.findPair(files[0].path, files[1].path) ?? tabs.create()
+    SIDES.forEach((side, index) => {
+      // replace() reuses a document that already has this path, so load the fresh text explicitly.
+      const doc = tabs.replace(target, side, files[index])
+      view.loadDocument(doc, files[index])
+      monaco.editor.setModelLanguage(doc.model, editorLanguage(format))
+    })
+    tabs.activate(target.id)
+    status(`Structural ${format.toUpperCase()} view: sources are unchanged; press Structural on the original tab to refresh`)
+  } finally { structuralBusy = false }
 }
 
 async function showHistory(path: string): Promise<void> {

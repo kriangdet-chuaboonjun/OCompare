@@ -112,6 +112,9 @@ export const comparisonRulesApi = {
   validate: (rules: import('../src/shared/comparisonRules').RegexRule[]) => transport<void>('workspace', { action: 'validateRules', rules }),
   normalizePair: (left: string, right: string, rules: import('../src/shared/comparisonRules').RegexRule[]) => transport<import('../src/shared/comparisonRules').NormalizedPair>('workspace', { action: 'normalizePair', left, right, rules }),
 }
+export const structuralApi: import('../src/shared/structural').StructuralApi = {
+  canonicalize: (text, format) => transport<string>('workspace', { action: 'canonicalizeStructural', text, format }),
+}
 export const backupApi = {
   list: (path: string) => transport<import('../src/renderer/backupHistory').BackupEntry[]>('workspace', { action: 'listHistory', path }),
   snapshot: (path: string, snapshotId: string) => transport<import('../src/shared/types').FileData>('workspace', { action: 'snapshot', path, snapshotId }),

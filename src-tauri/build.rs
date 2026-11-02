@@ -9,6 +9,7 @@ fn main() {
                 "stop_folder_watch",
                 "validate_comparison_rules",
                 "normalize_comparison_pair",
+                "canonicalize_structural",
                 "list_backup_history",
                 "read_backup_snapshot",
                 "restore_backup",

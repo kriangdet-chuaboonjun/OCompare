@@ -109,6 +109,16 @@ fn run(
                 .map_err(|e| AppError::new("REGEX_RULES", e, None))?))
             }
         }
+        "canonicalizeStructural" => {
+            let format: o_compare_rust::structural::Format =
+                serde_json::from_value(v["format"].clone())
+                    .map_err(|e| AppError::new("STRUCTURAL_PARSE", e, None))?;
+            Ok(json!(o_compare_rust::structural::canonicalize(
+                string(v, "text")?,
+                format
+            )
+            .map_err(|e| AppError::new("STRUCTURAL_PARSE", e, None))?))
+        }
         "watchFolders" => {
             let events = events.clone();
             let generation = watch.watch(

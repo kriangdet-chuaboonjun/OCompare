@@ -285,6 +285,18 @@ pub async fn normalize_comparison_pair(
 }
 
 #[tauri::command]
+pub async fn canonicalize_structural(
+    text: String,
+    format: crate::structural::Format,
+) -> Result<String, AppError> {
+    blocking(move || {
+        crate::structural::canonicalize(&text, format)
+            .map_err(|e| AppError::new("STRUCTURAL_PARSE", e, None))
+    })
+    .await
+}
+
+#[tauri::command]
 pub async fn list_backup_history(
     path: String,
     writes: State<'_, Arc<crate::write_service::WriteService>>,

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-canonicalize-structural"
+description = "Enables the canonicalize_structural command without any pre-configured scope."
+commands.allow = ["canonicalize_structural"]
+
+[[permission]]
+identifier = "deny-canonicalize-structural"
+description = "Denies the canonicalize_structural command without any pre-configured scope."
+commands.deny = ["canonicalize_structural"]

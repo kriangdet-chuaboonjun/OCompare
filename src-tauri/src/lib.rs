@@ -11,6 +11,7 @@ pub mod folder_sessions;
 pub mod folder_watch;
 pub mod folders;
 pub mod startup;
+pub mod structural;
 pub mod watcher;
 pub mod write_service;
 
@@ -40,6 +41,7 @@ pub fn run() {
             commands::stop_folder_watch,
             commands::validate_comparison_rules,
             commands::normalize_comparison_pair,
+            commands::canonicalize_structural,
             commands::list_backup_history,
             commands::read_backup_snapshot,
             commands::restore_backup,

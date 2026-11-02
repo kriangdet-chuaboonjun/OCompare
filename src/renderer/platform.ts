@@ -124,6 +124,9 @@ export const comparisonRulesApi = {
   validate: (rules: RegexRule[]) => command<void>('validate_comparison_rules', { rules }),
   normalizePair: (left: string, right: string, rules: RegexRule[]) => command<NormalizedPair>('normalize_comparison_pair', { left, right, rules }),
 }
+export const structuralApi: import('../shared/structural').StructuralApi = {
+  canonicalize: (text, format) => command<string>('canonicalize_structural', { text, format }),
+}
 export const backupApi = {
   list: (path: string) => command<import('./backupHistory').BackupEntry[]>('list_backup_history', { path }),
   snapshot: (path: string, id: string) => command<import('../shared/types').FileData>('read_backup_snapshot', { path, id }),

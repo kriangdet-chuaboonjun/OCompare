@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add Structural compare: the new toolbar button opens a read-only tab that compares canonical JSON, XML and CSV (sorted keys or attributes, normalized whitespace, empty elements, delimiters and quoting), so formatting-only differences disappear. Press it again on the original tab to refresh.
+
 ## [0.4.11] - 2026-11-01
 
 - Redesign the main window (Fluent Compact): a single 44px command bar with segmented Files/Folders and All/Diffs/Context groups, icon-only secondary commands, compact file headers with encoding and line-ending badges, rounded tabs, and a refreshed neutral Light/Dark palette.
