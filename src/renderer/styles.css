@@ -526,27 +526,32 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* ===== Design A · Fluent Compact: one 44px command bar, segmented groups, icon-only secondary commands ===== */
 body { font: 13px/20px 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; }
-#toolbar { flex-wrap: wrap; align-items: center; gap: 4px; min-height: 44px; padding: 4px 8px; background: var(--bg); }
+#toolbar { flex-wrap: nowrap; align-items: center; gap: 4px; height: 45px; min-height: 45px; padding: 4px 8px; background: var(--bg); box-sizing: border-box; }
 #logo { width: 32px; height: 32px; margin: 0 4px 0 0; flex: 0 0 auto; }
-#toolbar button { min-width: 0; flex-direction: row; gap: 6px; height: 32px; padding: 0 10px; border-radius: var(--radius-sm); font-size: 12px; white-space: nowrap; }
+#toolbar button { min-width: 0; flex-direction: row; gap: 6px; height: 36px; padding: 0 10px; border-radius: var(--radius-sm); font-size: 12px; white-space: nowrap; }
 #toolbar button span { font-size: 12px; margin: 0; }
 #toolbar button:hover { background: var(--hover); border-color: transparent; }
 #toolbar button.active, #toolbar button.toggle[aria-pressed=true] { background: var(--mode-bg); border-color: transparent; color: var(--mode-text); }
 #toolbar .sep { height: 20px; margin: 0 4px; align-self: center; }
-#file-tools { flex: 1 1 520px; flex-wrap: wrap; align-items: center; gap: 4px; }
+#file-tools { flex: 1 1 0; min-width: 0; flex-wrap: nowrap; align-items: center; gap: 4px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+#file-tools > * { flex: 0 0 auto; }
+@media(max-width:1400px) {
+  #file-tools button[data-cmd="copyToRight"] span, #file-tools button[data-cmd="copyToLeft"] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  #file-tools button[data-cmd="copyToRight"], #file-tools button[data-cmd="copyToLeft"] { width: 36px; padding: 0; justify-content: center; }
+}
 #folder-tools { flex: 1 1 auto; align-items: center; }
 .mode-switch, .seg { display: flex; gap: 2px; padding: 2px; border: 0; background: var(--chrome); border-radius: var(--radius-md); align-items: center; }
-#toolbar .mode-button, #toolbar .seg button { height: 28px; min-height: 28px; min-width: 0; padding: 0 12px; color: var(--muted); }
+#toolbar .mode-button, #toolbar .seg button { height: 32px; min-height: 32px; min-width: 0; padding: 0 12px; color: var(--muted); }
 #toolbar .mode-button.active, #toolbar .seg button.active { background: var(--surface); color: var(--mode-text); font-weight: 600; box-shadow: 0 0 0 1px var(--border); }
 #toolbar .seg .toolbar-icon { width: 16px; height: 16px; flex-basis: 16px; }
 /* Icon-only commands: the label stays in the accessibility tree through aria-label and the tooltip. */
 #file-tools button[data-cmd="ignoreWs"] span, #file-tools button[data-cmd="wrap"] span, #file-tools button[data-cmd="nextDiff"] span, #file-tools button[data-cmd="prevDiff"] span, #file-tools button[data-cmd="swap"] span, #file-tools button[data-cmd="reload"] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-#file-tools button[data-cmd="ignoreWs"], #file-tools button[data-cmd="wrap"], #file-tools button[data-cmd="nextDiff"], #file-tools button[data-cmd="prevDiff"], #file-tools button[data-cmd="swap"], #file-tools button[data-cmd="reload"] { width: 32px; padding: 0; justify-content: center; }
+#file-tools button[data-cmd="ignoreWs"], #file-tools button[data-cmd="wrap"], #file-tools button[data-cmd="nextDiff"], #file-tools button[data-cmd="prevDiff"], #file-tools button[data-cmd="swap"], #file-tools button[data-cmd="reload"] { width: 36px; padding: 0; justify-content: center; }
 #file-tools button[data-cmd="rules"], #file-tools button[data-cmd="history"] { margin-left: 0; }
 #file-tools button[data-cmd="rules"] { margin-left: auto; }
 #toolbar .toolbar-icon { width: 18px; height: 18px; flex-basis: 18px; stroke-width: 1.6; }
 #toolbar button.active .toolbar-icon, #toolbar button[aria-pressed=true] .toolbar-icon { color: var(--mode-text); }
-#theme-toggle, #check-updates { min-height: 32px; margin-left: 0; }
+#theme-toggle, #check-updates { min-height: 36px; margin-left: 0; }
 #theme-toggle { margin-left: auto; }
 #toolbar #theme-toggle[aria-pressed=true] { background: transparent; }
 #file-tools[hidden] ~ #theme-toggle { margin-left: auto; }
@@ -566,11 +571,14 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 #statusbar { gap: 24px; height: 28px; align-items: center; padding: 0 12px; font-size: 12px; color: var(--muted); background: var(--chrome); }
 #st-diffs { color: var(--text); }
 #st-diffs::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--different); }
-#toolbar #folder-tools .folder-toolbar button { height: 40px; min-width: 44px; padding: 2px 4px; gap: 2px; justify-content: center; border-radius: var(--radius-sm); font-size: 11px; line-height: 14px; }
+#toolbar #folder-tools .folder-toolbar button { height: 36px; min-height: 36px; min-width: 44px; padding: 2px 4px; gap: 1px; justify-content: center; border-radius: var(--radius-sm); font-size: 11px; line-height: 13px; }
 #toolbar #folder-tools .folder-toolbar button:hover:not(:disabled) { background: var(--hover); border-color: transparent; }
 #toolbar #folder-tools .folder-toolbar button[aria-pressed=true] { background: var(--mode-bg); border-color: transparent; color: var(--mode-text); }
-#toolbar #folder-tools .folder-toolbar svg { width: 18px; height: 18px; flex: 0 0 18px; }
+#toolbar #folder-tools .folder-toolbar svg { width: 16px; height: 16px; flex: 0 0 16px; }
 #folder-tools .folder-toolbar { gap: 0; align-items: center; }
 #check-updates { padding: 0 8px; }
 #toolbar #folder-tools { flex: 1 1 0; min-width: 0; }
 #toolbar #check-updates, #toolbar #theme-toggle { flex: 0 0 auto; }
+
+.diff-counter { min-width: 44px; text-align: center; font: 12px/16px 'Cascadia Code', Consolas, monospace; color: var(--muted); white-space: nowrap; }
+.folder-pathbar.drop-target input { outline: 2px dashed var(--accent); outline-offset: -2px; }

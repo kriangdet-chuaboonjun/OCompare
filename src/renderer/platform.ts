@@ -70,6 +70,7 @@ export const folderApi: FolderApi = {
   loadSessions: () => command('load_folder_sessions'),
   saveSessions: store => command('save_folder_sessions', { store }),
   diskSpace: path => command('folder_disk_space', { path }),
+  pathKinds: paths => command('folder_path_kinds', { paths }),
   planCopy: (leftPath, rightPath, direction, paths, requestId, ignoredFolders) => command('plan_folder_copy', { leftPath, rightPath, direction, paths, requestId, ignoredFolders }),
   executeCopy: (planId, requestId) => command('execute_folder_copy', { planId, requestId }),
   discardCopy: planId => command('discard_folder_copy', { planId }),

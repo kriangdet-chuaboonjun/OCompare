@@ -179,6 +179,10 @@ function renderStatus(): void {
     $<HTMLElement>('#st-pos').textContent = summary ? `${summary.errors} errors · ${summary.skipped} skipped` : ''
     return
   }
+  const { index, total } = view.diffPosition()
+  const counter = $<HTMLElement>('#diff-counter')
+  counter.textContent = total === 0 ? '0' : `${index || '–'} / ${total}`
+  counter.setAttribute('aria-label', total === 0 ? 'No differences' : `Difference ${index || 'none selected'} of ${total}`)
   const n = view.diffCount()
   const regex = tabs.active.regexRules.some(rule => rule.enabled)
   $<HTMLElement>('#st-diffs').textContent = (n === 0 ? regex ? 'No differences under rules' : 'Identical' : `${n} difference section(s)`) + (regex ? ' · Regex' : '')
@@ -487,10 +491,38 @@ function sideAt(x: number): Side {
   return x < r.left + r.width / 2 ? 'left' : 'right'
 }
 
+function folderSideAt(x: number): Side {
+  const r = document.getElementById('folder-panel')!.getBoundingClientRect()
+  return x < r.left + r.width / 2 ? 'left' : 'right'
+}
+
+function markFolderDrop(side: Side | null): void {
+  for (const input of document.querySelectorAll<HTMLInputElement>('#folder-panel .folder-tab-panel:not([hidden]) input[data-root]'))
+    input.parentElement!.classList.toggle('drop-target', input.dataset.root === side)
+}
+
+/** Folders mode: one folder fills the side under the pointer, two fill left then right. Files are ignored. */
+function handleFolderDrop(event: DropEvent): void {
+  const over = event.type === 'enter' || event.type === 'over'
+  markFolderDrop(over && event.paths.length < 2 ? folderSideAt(event.x) : null)
+  if (event.type !== 'drop' || event.paths.length === 0) return
+  const dropped = event.paths.slice(0, 2)
+  const side = folderSideAt(event.x)
+  const controller = activeFolders()
+  run(async () => {
+    const kinds = await folderApi.pathKinds(dropped)
+    const folders = dropped.filter((_, i) => kinds[i] === 'directory')
+    if (folders.length === 0) { status('Drop folders here — files are not compared in Folders mode'); return }
+    if (folders.length === 2) { controller.setRoot('left', folders[0]); controller.setRoot('right', folders[1]) }
+    else controller.setRoot(side, folders[0])
+    if (folders.length < dropped.length) status('Only folders were used; dropped files were ignored')
+  })
+}
+
 /** ใช้ native file paths จาก Tauri แทน Electron webUtils */
 function handleDrop(event: DropEvent): void {
   if (installationLocked) return
-  if (mode === 'folders') return
+  if (mode === 'folders') return handleFolderDrop(event)
   SIDES.forEach((side) => head(side).classList.toggle('drop-target',
     (event.type === 'enter' || event.type === 'over') && side === sideAt(event.x)))
   if (event.type !== 'drop') return

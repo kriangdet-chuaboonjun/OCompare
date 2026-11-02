@@ -108,6 +108,11 @@ pub async fn folder_disk_space(path: String) -> Result<u64, AppError> {
 }
 
 #[tauri::command]
+pub async fn folder_path_kinds(paths: Vec<String>) -> Result<Vec<String>, AppError> {
+    blocking(move || Ok(crate::folder_copy::path_kinds(&paths).into_iter().map(String::from).collect())).await
+}
+
+#[tauri::command]
 pub async fn plan_folder_copy(
     left_path: String,
     right_path: String,

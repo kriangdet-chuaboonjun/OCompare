@@ -61,6 +61,8 @@ export interface FolderApi {
   loadSessions(): Promise<SessionStore>
   saveSessions(store: SessionStore): Promise<void>
   diskSpace(path: string): Promise<number>
+  /** Classify dropped paths so only directories become comparison roots. */
+  pathKinds(paths: string[]): Promise<Array<'directory' | 'file' | 'other'>>
   planCopy(
     leftPath: string,
     rightPath: string,

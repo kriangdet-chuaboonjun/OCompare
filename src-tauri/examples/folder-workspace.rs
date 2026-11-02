@@ -142,6 +142,14 @@ fn run(
         "diskSpace" => Ok(json!(o_compare_rust::folder_copy::disk_space(Path::new(
             string(v, "path")?
         ))?)),
+        "pathKinds" => Ok(json!(o_compare_rust::folder_copy::path_kinds(
+            &v["paths"]
+                .as_array()
+                .ok_or_else(|| AppError::new("ARG", "paths", None))?
+                .iter()
+                .map(|p| p.as_str().unwrap_or_default().to_string())
+                .collect::<Vec<_>>()
+        ))),
         "discardCopy" => {
             service.discard(string(v, "planId")?)?;
             Ok(Value::Null)

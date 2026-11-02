@@ -185,6 +185,20 @@ export class DiffView {
     return this.editor.getLineChanges()?.length ?? 0
   }
 
+  /** 1-based diff section under the cursor of the focused side; 0 when the cursor is above the first section. */
+  diffPosition(): { index: number; total: number } {
+    const changes = this.editor.getLineChanges() ?? []
+    const side = this.focused
+    const line = this.editorFor(side).getPosition()?.lineNumber ?? 1
+    // getLineChanges() returns fresh objects each call, so match by position, not identity.
+    const inside = changes.findIndex((c) => {
+      const [start, end] = this.range(c, side)
+      return end === 0 ? line === start || line === start + 1 : line >= start && line <= end
+    })
+    if (inside >= 0) return { index: inside + 1, total: changes.length }
+    return { index: changes.filter((c) => this.changeLines(c, side)[0] < line).length, total: changes.length }
+  }
+
   /**
    * All / Diffs / Context. Uses our own LineFilter rather than Monaco's
    * hideUnchangedRegions, whose region tracking breaks when a whole side is

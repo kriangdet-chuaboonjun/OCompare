@@ -21,6 +21,7 @@ fn main() {
                 "load_folder_sessions",
                 "save_folder_sessions",
                 "folder_disk_space",
+                "folder_path_kinds",
                 "plan_folder_copy",
                 "execute_folder_copy",
                 "discard_folder_copy",

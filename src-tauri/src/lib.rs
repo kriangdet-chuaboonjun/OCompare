@@ -52,6 +52,7 @@ pub fn run() {
             commands::load_folder_sessions,
             commands::save_folder_sessions,
             commands::folder_disk_space,
+            commands::folder_path_kinds,
             commands::plan_folder_copy,
             commands::execute_folder_copy,
             commands::discard_folder_copy

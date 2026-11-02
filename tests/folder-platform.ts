@@ -85,6 +85,7 @@ export const folderApi: FolderApi = {
   loadSessions: () => transport('workspace', { action: 'loadSessions' }),
   saveSessions: (store) => transport('workspace', { action: 'saveSessions', store }),
   diskSpace: (path) => transport('workspace', { action: 'diskSpace', path }),
+  pathKinds: (paths) => transport('workspace', { action: 'pathKinds', paths }),
   planCopy: (leftPath, rightPath, direction, paths, requestId, ignoredFolders) =>
     transport('workspace', { action: 'planCopy', leftPath, rightPath, direction, paths, requestId, ignoredFolders }),
   executeCopy: (planId, requestId) => transport('workspace', { action: 'executeCopy', planId, requestId }),
@@ -95,7 +96,10 @@ export function confirm(): Promise<boolean> {
   return Promise.resolve(window.testConfirm)
 }
 export async function setTitle(): Promise<void> {}
-export async function initializePlatform(): Promise<void> {}
+export async function initializePlatform(onDrop?: (event: DropEvent) => void): Promise<void> {
+  // Lets UI tests deliver the native drag-drop events the browser cannot produce.
+  ;(window as unknown as { __ocompareDrop?: unknown }).__ocompareDrop = onDrop
+}
 export function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error))
 }

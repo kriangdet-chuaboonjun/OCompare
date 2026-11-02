@@ -15,7 +15,7 @@
     "allow-validate-comparison-rules", "allow-normalize-comparison-pair",
     "allow-list-backup-history", "allow-read-backup-snapshot", "allow-restore-backup",
     "allow-compare-folders", "allow-cancel-folder-compare",
-    "allow-load-folder-sessions", "allow-save-folder-sessions", "allow-folder-disk-space",
+    "allow-load-folder-sessions", "allow-save-folder-sessions", "allow-folder-disk-space", "allow-folder-path-kinds",
     "allow-plan-folder-copy", "allow-execute-folder-copy", "allow-discard-folder-copy"
   ]
 }

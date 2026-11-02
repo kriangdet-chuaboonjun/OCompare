@@ -575,6 +575,18 @@ fn copy_one(
     Ok(())
 }
 
+/// "directory", "file" or "other" (missing, unreadable, special) for each path; links are followed.
+pub fn path_kinds(paths: &[String]) -> Vec<&'static str> {
+    paths
+        .iter()
+        .map(|path| match fs::metadata(path) {
+            Ok(meta) if meta.is_dir() => "directory",
+            Ok(meta) if meta.is_file() => "file",
+            _ => "other",
+        })
+        .collect()
+}
+
 pub fn disk_space(path: &Path) -> Result<u64, AppError> {
     #[cfg(windows)]
     {

@@ -188,3 +188,14 @@ fn junction_inserted_after_preview_cannot_redirect_copy() {
     assert_eq!(report.items[0].status, "skipped");
     assert_eq!(fs::read(outside.join("a")).unwrap(), b"keep");
 }
+
+#[test]
+fn path_kinds_separates_folders_files_and_missing_paths() {
+    let root = tempfile::tempdir().unwrap();
+    let dir = root.path().join("ไทย folder");
+    let file = root.path().join("a.txt");
+    std::fs::create_dir(&dir).unwrap();
+    std::fs::write(&file, "x").unwrap();
+    let paths = [dir, file, root.path().join("missing")].map(|p| p.to_string_lossy().into_owned());
+    assert_eq!(o_compare_rust::folder_copy::path_kinds(&paths), ["directory", "file", "other"]);
+}
