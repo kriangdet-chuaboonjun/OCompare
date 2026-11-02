@@ -46,7 +46,7 @@ export function toolbarIcon(command: string): SVGSVGElement {
 
 /** Replace font glyphs with the same vectors used by folder commands, preserving labels and handlers. */
 export function initializeToolbarIcons(): void {
-  const commands: Record<string, string> = { rules: 'rules', history: 'history', viewAll: 'all', viewDiffs: 'diffs', viewContext: 'context', ignoreWs: 'minor', wrap: 'wrap', copyToRight: 'copyRight', copyToLeft: 'copyLeft', nextDiff: 'next', prevDiff: 'previous', swap: 'swap', reload: 'refresh' }
+  const commands: Record<string, string> = { rules: 'rules', structural: 'structure', history: 'history', viewAll: 'all', viewDiffs: 'diffs', viewContext: 'context', ignoreWs: 'minor', wrap: 'wrap', copyToRight: 'copyRight', copyToLeft: 'copyLeft', nextDiff: 'next', prevDiff: 'previous', swap: 'swap', reload: 'refresh' }
   document.querySelectorAll<HTMLButtonElement>('#file-tools button[data-cmd]').forEach(button => {
     const label = button.querySelector('span')!
     button.replaceChildren(toolbarIcon(commands[button.dataset.cmd!]), label)

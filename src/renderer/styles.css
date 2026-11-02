@@ -548,6 +548,13 @@ body { font: 13px/20px 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-ser
 #file-tools button[data-cmd="ignoreWs"] span, #file-tools button[data-cmd="wrap"] span, #file-tools button[data-cmd="nextDiff"] span, #file-tools button[data-cmd="prevDiff"] span, #file-tools button[data-cmd="swap"] span, #file-tools button[data-cmd="reload"] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 #file-tools button[data-cmd="ignoreWs"], #file-tools button[data-cmd="wrap"], #file-tools button[data-cmd="nextDiff"], #file-tools button[data-cmd="prevDiff"], #file-tools button[data-cmd="swap"], #file-tools button[data-cmd="reload"] { width: 36px; padding: 0; justify-content: center; }
 #file-tools button[data-cmd="rules"], #file-tools button[data-cmd="history"] { margin-left: 0; }
+@media(max-width:1100px) {
+  #file-tools button[data-cmd="rules"] span, #file-tools button[data-cmd="structural"] span, #file-tools button[data-cmd="history"] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  #file-tools button[data-cmd="rules"], #file-tools button[data-cmd="structural"], #file-tools button[data-cmd="history"] { width: 36px; padding: 0; justify-content: center; }
+  /* Compact windows wrap instead of hiding commands in a scrollbar-less strip. */
+  #toolbar { flex-wrap: wrap; height: auto; }
+  #file-tools { flex: 1 1 100%; order: 1; flex-wrap: wrap; overflow: visible; }
+}
 #file-tools button[data-cmd="rules"] { margin-left: auto; }
 #toolbar .toolbar-icon { width: 18px; height: 18px; flex-basis: 18px; stroke-width: 1.6; }
 #toolbar button.active .toolbar-icon, #toolbar button[aria-pressed=true] .toolbar-icon { color: var(--mode-text); }
