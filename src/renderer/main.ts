@@ -158,6 +158,17 @@ function renderHeaders(): void {
     const snapshot = kind !== null
     pathInput.readOnly = snapshot
     if (document.activeElement !== pathInput) pathInput.value = snapshot ? `${s.path!.split('/').pop()} [${kind} — read-only]` : s.path ?? ''
+    // Reuse live documents across tabs; virtual snapshots are not filesystem paths.
+    const choices = $<HTMLSelectElement>('.path-choices', h)
+    const paths = tabs.documents().map(doc => doc.path).filter((path): path is string => !!path && !isVirtualPath(path))
+    const signature = JSON.stringify(paths)
+    if (choices.dataset.paths !== signature) {
+      choices.dataset.paths = signature
+      choices.replaceChildren(new Option(paths.length ? 'Choose an open file' : 'No open files', ''))
+      choices.options[0].disabled = true
+      for (const path of paths) choices.add(new Option(path, path))
+      choices.value = ''
+    }
     $<HTMLElement>('.dirty', h).textContent = dirty ? '● modified' : ''
     $<HTMLElement>('.mtime', h).textContent = fmtDate(s.mtimeMs)
     $<HTMLElement>('.size', h).textContent = fmtSize(s.size)
@@ -510,6 +521,12 @@ for (const side of SIDES) {
   $<HTMLButtonElement>('.open', h).addEventListener('click', () => run(() => openFile(side)))
   $<HTMLButtonElement>('.save', h).addEventListener('click', () => run(() => saveFile(side)))
   const input = $<HTMLInputElement>('.path', h)
+  const choices = $<HTMLSelectElement>('.path-choices', h)
+  choices.addEventListener('change', () => {
+    const path = choices.value
+    choices.value = ''
+    if (path) run(() => loadFile(side, path))
+  })
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && input.value.trim()) run(() => loadFile(side, input.value.trim()))
     if (e.key === 'Escape') {

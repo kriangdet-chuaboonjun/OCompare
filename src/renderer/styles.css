@@ -566,9 +566,14 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 
 /* Pane heads: path field + compact pills instead of a second text row */
 #panes-head { gap: 8px; padding: 8px 12px; background: var(--header-bg); border-bottom: 1px solid var(--border); }
-.pathbar { gap: 4px; }
-.pathbar .path { height: 28px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font: 12px 'Cascadia Code', Consolas, monospace; }
-.pathbar button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text); }
+.pathbar { gap: 3px; align-items: center; }
+.path-field { display: flex; flex: 1; min-width: 0; height: 28px; border: 1px solid var(--path-border); background: var(--surface); }
+.pathbar .path { width: 0; height: 26px; padding: 0 6px; border: 0; border-radius: 0; font: 12px 'Cascadia Code', Consolas, monospace; }
+.path-choices { flex: 0 0 24px; width: 24px; min-width: 0; height: 26px; padding: 0; border: 0; border-radius: 0; background-color: var(--surface); color: var(--text); font-size: 0; cursor: pointer; }
+.path-choices option { font: 12px 'Segoe UI', sans-serif; }
+.path-choices:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.pathbar button { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; padding: 0; border: 1px solid var(--path-border); border-radius: 0; background: var(--surface); color: var(--text); }
+.pathbar .open { font-size: 16px; line-height: 1; }
 .pathbar button:hover:not(:disabled) { background: var(--hover); }
 .pb-icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .infobar { gap: 6px; padding: 6px 0 0; font-size: 12px; line-height: 16px; }

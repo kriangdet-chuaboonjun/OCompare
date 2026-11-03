@@ -44,9 +44,12 @@
     <div id="panes-head">
       <div class="side-head" data-side="left">
         <div class="pathbar">
-          <input class="path" aria-label="Left file path" placeholder="Drop a file here or click Open…" spellcheck="false" />
-          <button class="open" aria-label="Open left file" title="Open file"><svg class="pb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h4l3 3h7a2 2 0 0 1 2 2v1M3 7h4l2 3h11a1 1 0 0 1 1 1l-2 8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg></button>
-          <button class="save" aria-label="Save left file" title="Save (Ctrl+S)" disabled><svg class="pb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/></svg></button>
+          <div class="path-field">
+            <input class="path" aria-label="Left file path" spellcheck="false" />
+            <select class="path-choices" aria-label="Choose an open file for the left side" title="Choose an open file"><option value="">No open files</option></select>
+          </div>
+          <button class="open" aria-label="Open left file" title="Open file">…</button>
+          <button class="save" aria-label="Save left file" title="Save (Ctrl+S)" disabled><svg class="pb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-4 4 4-4 4 4"/></svg></button>
         </div>
         <div class="infobar">
           <span class="dirty"></span><span class="mtime"></span><span class="size"></span>
@@ -55,9 +58,12 @@
       </div>
       <div class="side-head" data-side="right">
         <div class="pathbar">
-          <input class="path" aria-label="Right file path" placeholder="Drop a file here or click Open…" spellcheck="false" />
-          <button class="open" aria-label="Open right file" title="Open file"><svg class="pb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h4l3 3h7a2 2 0 0 1 2 2v1M3 7h4l2 3h11a1 1 0 0 1 1 1l-2 8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg></button>
-          <button class="save" aria-label="Save right file" title="Save (Ctrl+S)" disabled><svg class="pb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/></svg></button>
+          <div class="path-field">
+            <input class="path" aria-label="Right file path" spellcheck="false" />
+            <select class="path-choices" aria-label="Choose an open file for the right side" title="Choose an open file"><option value="">No open files</option></select>
+          </div>
+          <button class="open" aria-label="Open right file" title="Open file">…</button>
+          <button class="save" aria-label="Save right file" title="Save (Ctrl+S)" disabled><svg class="pb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-4 4 4-4 4 4"/></svg></button>
         </div>
         <div class="infobar">
           <span class="dirty"></span><span class="mtime"></span><span class="size"></span>
