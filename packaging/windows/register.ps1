@@ -8,8 +8,10 @@ try {
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   $zip = [IO.Compression.ZipFile]::OpenRead($packagePath)
   try { $hasSignature = $null -ne $zip.GetEntry('AppxSignature.p7x') } finally { $zip.Dispose() }
+  $devMode = (Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -ErrorAction SilentlyContinue).AllowDevelopmentWithoutDevLicense
+  # แพ็กเกจที่ไม่มีลายเซ็นลงแบบปกติไม่ได้ ถ้าเปิด Developer Mode อยู่แล้วให้ใช้ Development registration แทน เพื่อไม่ให้เมนู Explorer หายหลังอัปเกรด
+  if (-not $Development -and -not $hasSignature -and $devMode -eq 1) { $Development = [switch]::new($true) }
   if ($Development) {
-    $devMode = (Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -ErrorAction SilentlyContinue).AllowDevelopmentWithoutDevLicense
     if ($devMode -ne 1) { throw 'Development registration requires Developer Mode to already be enabled. No system setting has been changed.' }
     $packageHash = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.Substring(0,16)
     $developmentPath = Join-Path $installRoot "resources\explorer\Development-$packageHash"
@@ -18,7 +20,7 @@ try {
     }
     Add-AppxPackage -Register (Join-Path $developmentPath 'AppxManifest.xml') -ExternalLocation $installRoot -ErrorAction Stop
   } else {
-    if (-not $hasSignature) { throw 'Explorer integration requires a signed package trusted by Windows. Set signing configuration and rebuild; direct file/folder comparison remains available.' }
+    if (-not $hasSignature) { throw 'Explorer integration requires a signed package trusted by Windows, or Developer Mode already enabled for an unsigned package. Set signing configuration and rebuild; direct file/folder comparison remains available.' }
     Add-AppxPackage -Path $packagePath -ExternalLocation $installRoot -ErrorAction Stop
   }
   $registryPath = 'HKCU:\Software\FusionSoft\O_Compare_Rust\ExplorerIntegration'

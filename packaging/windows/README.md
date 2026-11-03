@@ -19,7 +19,11 @@ OCOMPARE_SIGN_CERT_PASSWORD and OCOMPARE_SIGN_TIMESTAMP_URL before build:win.
 The build reports whether the sparse package is signed. No certificate or system
 security setting is installed or changed by these scripts.
 
-For development only, on a machine with Developer Mode already enabled:
+If the package is unsigned and Developer Mode is already enabled, register.ps1
+falls back to the Development registration automatically (so the installer keeps the
+Explorer menu working after an upgrade). Without Developer Mode it refuses.
+
+To force it manually, on a machine with Developer Mode already enabled:
 `powershell -NoProfile -File resources\explorer\register.ps1 -InstallDirectory . -Development`
 Use the integration directory containing o-compare-rust.exe and resources.
 Explorer may need to be restarted once before newly registered commands appear.
