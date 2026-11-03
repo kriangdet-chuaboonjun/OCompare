@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.4.13] - 2026-11-03
+
+- Fix the Windows Explorer context menu (Select Left for Compare / Compare to) disappearing after an upgrade: when the Explorer package is unsigned and Developer Mode is already on, the installer now registers it in Development mode automatically.
+
 ## [0.4.12] - 2026-11-02
 
 - Add Structural compare: the new toolbar button opens a read-only tab that compares canonical JSON, XML and CSV (sorted keys or attributes, normalized whitespace, empty elements, delimiters and quoting), so formatting-only differences disappear. Press it again on the original tab to refresh.
