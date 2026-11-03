@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.14] - 2026-11-03
+
+- Add a dropdown to each file path field in Files mode that lists every file open in any tab, so a side can be switched to an already open document in one click; unsaved-change confirmation still applies.
+- Compact the path bar: the path field and its dropdown share one bordered box, and the Open and Save buttons are square icon buttons without the placeholder text.
+
 ## [0.4.13] - 2026-11-03
 
 - Fix the Windows Explorer context menu (Select Left for Compare / Compare to) disappearing after an upgrade: when the Explorer package is unsigned and Developer Mode is already on, the installer now registers it in Development mode automatically.
