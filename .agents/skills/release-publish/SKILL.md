@@ -51,7 +51,7 @@ The publisher uploads five assets to a draft with progress, verifies downloaded 
 
 - Confirm the release is published, its tag targets the intended commit, and the setup, portable, `.sig`, `latest.json`, and `SHA256SUMS.txt` assets exist.
 - Fetch the public `releases/latest/download/latest.json` without credentials and check its version and immutable version-tag installer URL.
-- Exercise the application's online check when available. Distinguish an app/portable smoke test from an actual installer upgrade. Apply installer-validation requirements from `docs/RELEASING.md` and the current request, honoring explicit user overrides. If a required VM/UAC check cannot run, retain the prepared artifacts and report the exact unmet requirement before publication.
+- Exercise the application's online check when available. Distinguish an app/portable smoke test from an actual installer upgrade. The default release checks are the automated checks above, artifact verification, and available app smoke tests. Additional manual installer testing is optional and runs only when the user requests it; its absence does not block publication or require a waiver. For this skill, this scope overrides broader manual installer-testing guidance in `docs/RELEASING.md`.
 - Report version, release URL, local installer path, commit/push result, checks passed, and remaining validation limits. Never claim installed-setup validation from browser tests alone.
 
 Signing material remains outside Git. Pass credentials through the existing protected files/environment workflow, and never print or upload them. Repository visibility changes and release deletion require their own user request.
