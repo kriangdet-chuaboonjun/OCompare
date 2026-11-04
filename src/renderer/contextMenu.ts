@@ -2,13 +2,13 @@ import { toolbarIcon } from './folderChrome'
 
 export type MenuEntry =
   | { separator: true }
-  | { label: string; icon?: string; disabled?: boolean; action: () => void }
+  | { label: string; icon?: string | SVGSVGElement; disabled?: boolean; checked?: boolean; action: () => void }
 
 const MARGIN = 4
 let closeCurrent: ((restore: boolean) => void) | null = null
 
 /** Windows-style popup at the pointer; closes on outside click, Escape, blur, resize or scroll. */
-export function showContextMenu(x: number, y: number, entries: MenuEntry[], title = 'Context menu'): HTMLElement {
+export function showContextMenu(x: number, y: number, entries: MenuEntry[], title = 'Context menu', onClose?: () => void): HTMLElement {
   closeCurrent?.(false)
   const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
   const menu = document.createElement('div')
@@ -29,14 +29,23 @@ export function showContextMenu(x: number, y: number, entries: MenuEntry[], titl
     item.type = 'button'
     item.className = 'context-item'
     item.tabIndex = -1
-    item.setAttribute('role', 'menuitem')
+    item.setAttribute('role', entry.checked === undefined ? 'menuitem' : 'menuitemcheckbox')
+    if (entry.checked !== undefined) item.setAttribute('aria-checked', String(entry.checked))
     if (entry.disabled) item.setAttribute('aria-disabled', 'true')
     const icon = document.createElement('span')
     icon.className = 'context-icon'
-    if (entry.icon) icon.append(toolbarIcon(entry.icon))
+    // Reuse a command's actual toolbar vector, including aliases used in Files mode.
+    if (entry.icon) icon.append(typeof entry.icon === 'string' ? toolbarIcon(entry.icon) : entry.icon.cloneNode(true))
     const label = document.createElement('span')
     label.textContent = entry.label
     item.append(icon, label)
+    if (entry.checked !== undefined) {
+      const check = document.createElement('span')
+      check.className = 'context-icon context-check'
+      check.setAttribute('aria-hidden', 'true')
+      if (entry.checked) check.append(toolbarIcon('check'))
+      item.append(check)
+    }
     item.addEventListener('click', () => {
       if (entry.disabled) return
       close(false)
@@ -83,6 +92,7 @@ export function showContextMenu(x: number, y: number, entries: MenuEntry[], titl
     window.removeEventListener('resize', dismiss)
     document.removeEventListener('scroll', outside, true)
     menu.remove()
+    onClose?.()
     // Escape returns to the grid; pointer dismissal keeps whatever the user clicked.
     if (restore && previous?.isConnected) previous.focus({ preventScroll: true })
   }

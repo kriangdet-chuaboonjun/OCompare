@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { clickToolbarCommand } from './toolbar-test-helpers.mjs'
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
@@ -118,9 +119,9 @@ try {
 
   await page.setViewportSize({ width: 1000, height: 700 })
   await page.locator('[data-mode=files]').click()
-  await page.locator('#theme-toggle').click()
+  await clickToolbarCommand(page, '#theme-toggle')
   await page.screenshot({ path: 'docs/evidence/features-dark.png' })
-  await page.locator('#theme-toggle').click()
+  await clickToolbarCommand(page, '#theme-toggle')
   await page.setViewportSize({ width: 1500, height: 950 })
   await page.screenshot({ path: 'docs/evidence/features-light.png' })
   await page.waitForTimeout(400)

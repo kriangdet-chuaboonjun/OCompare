@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { clickToolbarCommand } from './toolbar-test-helpers.mjs'
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -32,7 +33,7 @@ try {
     assert(rgb.every(channel => channel < 100), `${selector} should have a dark background: ${rgb}`)
   }
   await ready()
-  assert.equal(await page.locator('#theme-toggle').count(), 1, 'Shared toolbar needs a theme toggle')
+  assert.equal(await page.locator('#settings-dialog #theme-toggle').count(), 1, 'Settings contains the shared theme toggle')
   assert.equal(await theme(), 'light', 'Default stays Light even on a dark OS')
   await page.screenshot({ path: 'docs/evidence/theme/files-light.png' })
   await page.evaluate(() => {
@@ -44,7 +45,7 @@ try {
   })
   await page.waitForFunction(() => window.__ocompare.diffCount() === 1)
   const before = await page.evaluate(() => ({ text: window.__ocompare.textOf('right'), position: window.__ocompare.editorFor('right').getPosition() }))
-  await page.locator('#theme-toggle').click()
+  await clickToolbarCommand(page, '#theme-toggle')
   assert.equal(await theme(), 'dark')
   assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'), 'true')
   for (const selector of ['body', '#toolbar', '.pathbar input', '#statusbar', '.monaco-editor-background']) await darkSurface(selector)
@@ -77,8 +78,10 @@ try {
   await darkSurface('.folder-dialog input')
   await page.screenshot({ path: 'docs/evidence/theme/dialog-dark.png' })
   await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
   await page.locator('#theme-toggle').focus()
   await page.keyboard.press('Space')
+  await page.getByRole('button', { name: 'Close settings', exact: true }).click()
   assert.equal(await theme(), 'light')
   assert.equal(await bg('.folder-scroll'), 'rgb(255, 255, 255)')
   assert.equal(await page.locator('.folder-row').count(), 1, 'Switching theme preserves comparison results')
@@ -90,8 +93,9 @@ try {
   assert.equal(await theme(), 'light', 'Invalid saved values fall back to Light')
   await page.setViewportSize({ width: 900, height: 650 })
   await page.locator('[data-mode=folders]').click()
-  await page.locator('#theme-toggle').click()
-  const bounds = await page.locator('#theme-toggle').boundingBox()
+  await clickToolbarCommand(page, '#theme-toggle')
+  assert.equal(await theme(), 'dark')
+  const bounds = await page.getByRole('button', { name: 'Settings', exact: true }).boundingBox()
   assert(bounds.x >= 0 && bounds.x + bounds.width <= 900, 'Toggle remains reachable in compact windows')
   await page.screenshot({ path: 'docs/evidence/theme/compact-dark.png' })
   assert.equal(await page.locator('vite-error-overlay').count(), 0)
@@ -104,7 +108,7 @@ try {
   blockedPage.on('pageerror', e => errors.push(e.message))
   await blockedPage.goto(server.url)
   await blockedPage.waitForFunction(() => Boolean(window.__ocompare))
-  await blockedPage.locator('#theme-toggle').click()
+  await clickToolbarCommand(blockedPage, '#theme-toggle')
   assert.equal(await blockedPage.locator('html').getAttribute('data-theme'), 'dark', 'Blocked storage must not prevent toggling')
   assert((await blockedPage.locator('#st-msg').textContent()).includes('could not save'))
   assert.deepEqual(errors, [])

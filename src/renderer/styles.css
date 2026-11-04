@@ -412,7 +412,6 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 #folder-tools .folder-toolbar button:hover { background: var(--folder-hover); border-color: var(--folder-hover-border); }
 #folder-tools .folder-toolbar button[aria-pressed=true] { background: var(--folder-pressed); border-color: var(--folder-pressed-border); }
 .folder-toolbar svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
-#folder-tools .folder-toolbar .folder-more { display: none; }
 #folder-panel .folder-paths { display: grid; grid-template-columns: 1fr 1fr; padding: 2px 0; gap: 32px; background: var(--folder-chrome); border-bottom: 1px solid var(--path-border); }
 #folder-panel .folder-pathbar { gap: 1px; min-width: 0; }
 #folder-panel .folder-pathbar input { padding: 2px 4px; font: 12px 'Segoe UI',sans-serif; }
@@ -478,7 +477,7 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 .copy-preview > div { padding: 6px; border-bottom: 1px solid var(--grid-border); }
 .copy-preview .copy-skip { color: var(--skipped); }
 .copy-preview .copy-overwrite { color: var(--overwrite); }
-@media(max-width:1150px) { #folder-tools .folder-toolbar .folder-secondary { display: none; } #folder-tools .folder-toolbar .folder-more { display: flex; } .folder-toolbar { gap: 0; } .folder-filterbar input { width: 180px; } }
+@media(max-width:1150px) { .folder-filterbar input { width: 180px; } }
 @media(max-width:800px) { #folder-tools .folder-toolbar button { min-width: 40px; padding: 3px; font-size: 11px; } .folder-bottom { flex-wrap: wrap; } }
 .folder-grid-header,.folder-row { grid-template-columns: minmax(var(--folder-min-left,320px),calc(var(--folder-left) - 16px)) 32px minmax(var(--folder-min-right,320px),calc(var(--folder-right) - 16px)); min-width: calc(var(--folder-min-left,320px) + var(--folder-min-right,320px) + 32px); }
 .folder-canvas { min-width: calc(var(--folder-min-left,320px) + var(--folder-min-right,320px) + 32px); }
@@ -497,10 +496,6 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 
 /* Native controls and dynamically created dialogs share the active palette. */
 input, select, textarea { background: var(--surface); color: var(--text); }
-#theme-toggle { margin-left: auto; min-height: 44px; gap: 3px; flex-shrink: 0; }
-#theme-toggle span { margin: 0; }
-#toolbar #theme-toggle[aria-pressed=true] { background: var(--pressed); border-color: var(--active-border); }
-#toolbar #theme-toggle .toolbar-icon { color: inherit; }
 select:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* Folder tabs: every tab keeps its own panel; only the selected one is shown. */
@@ -521,6 +516,7 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .context-item:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .context-item[aria-disabled=true] { opacity: .5; }
 .context-icon { flex: 0 0 20px; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
+.context-check { margin-left: auto; }
 .context-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .context-separator { height: 1px; margin: 4px 8px; background: var(--border); }
 
@@ -533,7 +529,7 @@ body { font: 13px/20px 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-ser
 #toolbar button:hover { background: var(--hover); border-color: transparent; }
 #toolbar button.active, #toolbar button.toggle[aria-pressed=true] { background: var(--mode-bg); border-color: transparent; color: var(--mode-text); }
 #toolbar .sep { height: 20px; margin: 0 4px; align-self: center; }
-#file-tools { flex: 1 1 0; min-width: 0; flex-wrap: nowrap; align-items: center; gap: 4px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+#file-tools { flex: 1 1 0; min-width: 0; flex-wrap: nowrap; align-items: center; gap: 4px; overflow: hidden; }
 #file-tools > * { flex: 0 0 auto; }
 @media(max-width:1400px) {
   #file-tools button[data-cmd="copyToRight"] span, #file-tools button[data-cmd="copyToLeft"] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -551,17 +547,10 @@ body { font: 13px/20px 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-ser
 @media(max-width:1100px) {
   #file-tools button[data-cmd="rules"] span, #file-tools button[data-cmd="structural"] span, #file-tools button[data-cmd="history"] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   #file-tools button[data-cmd="rules"], #file-tools button[data-cmd="structural"], #file-tools button[data-cmd="history"] { width: 36px; padding: 0; justify-content: center; }
-  /* Compact windows wrap instead of hiding commands in a scrollbar-less strip. */
-  #toolbar { flex-wrap: wrap; height: auto; }
-  #file-tools { flex: 1 1 100%; order: 1; flex-wrap: wrap; overflow: visible; }
 }
 #file-tools button[data-cmd="rules"] { margin-left: auto; }
 #toolbar .toolbar-icon { width: 18px; height: 18px; flex-basis: 18px; stroke-width: 1.6; }
 #toolbar button.active .toolbar-icon, #toolbar button[aria-pressed=true] .toolbar-icon { color: var(--mode-text); }
-#theme-toggle, #check-updates { min-height: 36px; margin-left: 0; }
-#theme-toggle { margin-left: auto; }
-#toolbar #theme-toggle[aria-pressed=true] { background: transparent; }
-#file-tools[hidden] ~ #theme-toggle { margin-left: auto; }
 button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
 /* Both path rows use the incumbent compact Folders controls; file metadata stays below. */
@@ -592,12 +581,12 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 #toolbar #folder-tools .folder-toolbar button:hover:not(:disabled) { background: var(--hover); border-color: transparent; }
 #toolbar #folder-tools .folder-toolbar button[aria-pressed=true] { background: var(--mode-bg); border-color: transparent; color: var(--mode-text); }
 #toolbar #folder-tools .folder-toolbar svg { width: 18px; height: 18px; flex: 0 0 18px; }
-#folder-tools .folder-toolbar { gap: 4px; align-items: center; flex-wrap: wrap; }
-/* Horizontal commands can wrap inside their workspace without pushing global controls offscreen. */
-#toolbar:has(#folder-tools:not([hidden])) { height: auto; }
-#check-updates { padding: 0 8px; }
+#folder-tools .folder-toolbar { gap: 4px; align-items: center; flex-wrap: nowrap; min-width: 0; overflow: hidden; }
 #toolbar #folder-tools { flex: 1 1 0; min-width: 0; }
-#toolbar #check-updates, #toolbar #theme-toggle { flex: 0 0 auto; }
+/* Measure whole buttons and move overflow into the shared popup, never a second row. */
+#toolbar > .mode-switch, #toolbar button, #toolbar .seg, #toolbar .sep { flex-shrink: 0; }
+#toolbar #toolbar-more { flex: 0 0 36px; width: 36px; padding: 0; }
+#toolbar .toolbar-overflow-hidden { display: none !important; }
 
 .diff-counter { min-width: 44px; text-align: center; font: 12px/16px 'Cascadia Code', Consolas, monospace; color: var(--muted); white-space: nowrap; }
 .folder-pathbar.drop-target input { outline: 2px dashed var(--accent); outline-offset: -2px; }

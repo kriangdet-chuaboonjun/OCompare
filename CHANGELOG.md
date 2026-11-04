@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.4.16] - 2026-11-04
+
+- Keep Files and Folders commands on one toolbar row when resizing; move commands that do not fit into the More commands menu and restore them when the window widens.
+- Show matching command icons in the overflow menu, with separate checkmarks for active options and disabled states preserved.
+- Add Settings, opened from a rounded gear button, and move Dark Mode and Check for updates into it while retaining theme persistence and the existing update safeguards.
+
 ## [0.4.15] - 2026-11-04
 
 - Align the Folders toolbar with Files: horizontal icon-and-label buttons, matching icon sizes, and compact secondary commands that wrap without pushing global controls offscreen.

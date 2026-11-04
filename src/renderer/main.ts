@@ -21,6 +21,8 @@ import { allLanguages } from './language'
 import { defineThemes, initializeTheme } from './theme'
 import { installCopyArrow } from './copyArrow'
 import { initializeToolbarIcons } from './folderChrome'
+import { initializeToolbarOverflow } from './toolbarOverflow'
+import { initializeSettings } from './settings'
 import logoUrl from '../../assets/O_compare_toolbar.png'
 
 declare global {
@@ -35,6 +37,7 @@ const view = new DiffView(document.getElementById('editor')!, regexAdapter.overr
 // Defining themes initializes Monaco services: install our diff factory first.
 defineThemes()
 initializeTheme()
+initializeSettings(__APP_VERSION__)
 export const tabs = new FileTabs(view)
 installCopyArrow(view, document.getElementById('editor')!, (msg) => status(msg))
 // Handle for scripted testing over DevTools (dev builds only)
@@ -596,6 +599,8 @@ function handleDrop(event: DropEvent): void {
 
 // ---------- startup ----------
 initializeToolbarIcons()
+const disposeToolbarOverflow = initializeToolbarOverflow(document.getElementById('toolbar')!)
+window.addEventListener('pagehide', disposeToolbarOverflow, { once: true })
 window.addEventListener('pagehide', () => regexAdapter.dispose(), { once: true })
 $<HTMLImageElement>('#logo').src = logoUrl
 refreshToggles()

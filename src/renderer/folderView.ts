@@ -124,19 +124,6 @@ export class FolderView {
         b.classList.add('folder-secondary')
       toolbar.append(b)
     }
-    const more = actionButton('More', () =>
-      commandMenu(
-        'More commands',
-        commands
-          .filter(([c]) => ['rules', 'expand', 'collapse', 'select', 'log', 'watch', 'history'].includes(c))
-          .map(([c, l]) => [l, () => this.dispatch(c)]),
-      ),
-    )
-    const moreLabel = document.createElement('span')
-    moreLabel.textContent = 'More'
-    more.replaceChildren(toolbarIcon('more'), moreLabel)
-    more.className = 'folder-more'
-    toolbar.append(more)
     this.scroll = host.querySelector('.folder-scroll')!
     this.canvas = host.querySelector('.folder-canvas')!
     this.empty = host.querySelector('.folder-empty')!
@@ -359,6 +346,7 @@ export class FolderView {
       this.toolbar.querySelector(`[data-folder-cmd="${command}"]`)
         ?.setAttribute('aria-pressed', String(selected))
     }
+    this.toolbar.querySelector('[data-folder-cmd="log"]')?.setAttribute('aria-pressed', String(!this.host.querySelector<HTMLElement>('.folder-log-wrap')!.hidden))
     for (const c of ['minor', 'peek', 'structure'])
       this.toolbar
         .querySelector(`[data-folder-cmd="${c}"]`)
@@ -451,6 +439,7 @@ export class FolderView {
     } else if (cmd === 'log') {
       const log = this.host.querySelector<HTMLElement>('.folder-log-wrap')!
       log.hidden = !log.hidden
+      this.toolbar.querySelector('[data-folder-cmd="log"]')?.setAttribute('aria-pressed', String(!log.hidden))
     } else this.actions.command(cmd)
     this.layout()
   }

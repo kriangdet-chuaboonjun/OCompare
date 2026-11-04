@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { clickToolbarCommand } from './toolbar-test-helpers.mjs'
 import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
@@ -58,10 +59,11 @@ try {
     try {
       for (const width of [900, 640]) {
         await page.setViewportSize({ width, height: 650 })
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
         const clipped = await page.locator('#toolbar button, .pathbar input, .pathbar button').evaluateAll(els => els.filter(el => el.checkVisibility()).filter(el => { const r = el.getBoundingClientRect(); return r.left < 0 || r.right > innerWidth + 1 }).map(el => el.textContent || el.className))
         assert.deepEqual(clipped, [], `${width}px clipped controls`)
-        await page.locator('[data-cmd=rules]').click(); await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape')
-        await page.locator('[data-cmd=history]').click(); await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape')
+        await clickToolbarCommand(page, '[data-cmd=rules]'); await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape')
+        await clickToolbarCommand(page, '[data-cmd=history]'); await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape')
       }
     } finally { await page.setViewportSize({ width: 1400, height: 900 }) }
   })
@@ -84,7 +86,7 @@ try {
   await check('A01 SQL token contrast survives diff and character backgrounds in both themes', async () => {
     const ratios = []
     for (const theme of ['light', 'dark']) {
-      if (await page.locator('html').getAttribute('data-theme') !== theme) await page.locator('#theme-toggle').click()
+      if (await page.locator('html').getAttribute('data-theme') !== theme) await clickToolbarCommand(page, '#theme-toggle')
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
       const colors = await page.evaluate(theme => {
       const parse = color => color.match(/[\d.]+/g).slice(0, 3).map(Number)
@@ -115,7 +117,7 @@ try {
     for (const status of ['different', 'identical', 'minor', 'left-only', 'right-only', 'skipped'])
       assert.equal(await page.locator(`.folder-row.status-${status}`).count(), 1, `Real ${status} fixture must be present`)
     for (const theme of ['light', 'dark']) {
-      if (await page.locator('html').getAttribute('data-theme') !== theme) await page.locator('#theme-toggle').click()
+      if (await page.locator('html').getAttribute('data-theme') !== theme) await clickToolbarCommand(page, '#theme-toggle')
       for (const row of await page.locator('.folder-row').all()) {
         await row.click()
         const result = await page.locator('.folder-row.selected').evaluate(el => {

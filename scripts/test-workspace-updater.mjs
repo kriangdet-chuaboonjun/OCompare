@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { clickToolbarCommand } from './toolbar-test-helpers.mjs'
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -23,7 +24,7 @@ try {
   const watchedInput = page.locator('.side-head[data-side=left] .path'); await watchedInput.fill(watchedPath); await watchedInput.press('Enter')
   await page.waitForFunction(path => window.__ocompare.sides.left.path === path, watchedPath)
   await page.evaluate(() => window.__ocompare.sides.right.model.setValue('untitled content'))
-  await page.getByRole('button', { name: 'Check for updates', exact: true }).click()
+  await clickToolbarCommand(page, '#check-updates')
   await page.getByRole('button', { name: 'Download and install', exact: true }).click()
   await page.getByRole('dialog', { name: 'Unsaved changes' }).waitFor()
   assert.equal(await page.locator('#editor').evaluate(el => el.inert), true)
@@ -69,7 +70,7 @@ try {
   await page.locator('[data-root=right]').fill(right); await page.locator('[data-root=right]').press('Tab')
   await page.evaluate(() => { window.compareDelayMs = 1500 })
   await page.locator('[data-folder-cmd=compare]').click()
-  await page.getByRole('button', { name: 'Check for updates', exact: true }).click()
+  await clickToolbarCommand(page, '#check-updates')
   await page.getByRole('button', { name: 'Download and install', exact: true }).click()
   await page.getByRole('button', { name: 'Install update', exact: true }).waitFor()
   assert.equal(await page.evaluate(() => window.updateInstalls), 0)
