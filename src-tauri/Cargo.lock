@@ -2118,7 +2118,7 @@ dependencies = [
 
 [[package]]
 name = "o-compare-rust"
-version = "0.4.14"
+version = "0.4.15"
 dependencies = [
  "base64 0.22.1",
  "chardetng",

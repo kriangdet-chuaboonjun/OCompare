@@ -564,16 +564,17 @@ body { font: 13px/20px 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-ser
 #file-tools[hidden] ~ #theme-toggle { margin-left: auto; }
 button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
-/* Pane heads: path field + compact pills instead of a second text row */
-#panes-head { gap: 8px; padding: 8px 12px; background: var(--header-bg); border-bottom: 1px solid var(--border); }
-.pathbar { gap: 3px; align-items: center; }
-.path-field { display: flex; flex: 1; min-width: 0; height: 28px; border: 1px solid var(--path-border); background: var(--surface); }
-.pathbar .path { width: 0; height: 26px; padding: 0 6px; border: 0; border-radius: 0; font: 12px 'Cascadia Code', Consolas, monospace; }
-.path-choices { flex: 0 0 24px; width: 24px; min-width: 0; height: 26px; padding: 0; border: 0; border-radius: 0; background-color: var(--surface); color: var(--text); font-size: 0; cursor: pointer; }
+/* Both path rows use the incumbent compact Folders controls; file metadata stays below. */
+#panes-head, #folder-panel .folder-paths { gap: 32px; padding: 2px 0; background: var(--folder-chrome); border-bottom: 1px solid var(--path-border); }
+.pathbar, #folder-panel .folder-pathbar { gap: 1px; align-items: stretch; }
+.path-field { display: flex; flex: 1; min-width: 0; height: 22px; border: 1px solid var(--border); background: var(--surface); }
+.pathbar .path { width: 0; height: 20px; padding: 2px 4px; border: 0; border-radius: 0; font: 12px 'Segoe UI', sans-serif; }
+#folder-panel .folder-pathbar input { height: 22px; }
+.path-choices { flex: 0 0 20px; width: 20px; min-width: 0; height: 20px; padding: 0; border: 0; border-radius: 0; background-color: var(--surface); color: var(--text); font-size: 0; cursor: pointer; }
 .path-choices option { font: 12px 'Segoe UI', sans-serif; }
 .path-choices:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-.pathbar button { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; padding: 0; border: 1px solid var(--path-border); border-radius: 0; background: var(--surface); color: var(--text); }
-.pathbar .open { font-size: 16px; line-height: 1; }
+.pathbar button, #folder-panel .folder-pathbar button { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 22px; padding: 1px; border: 1px solid var(--border); border-radius: 0; background: var(--surface); color: var(--text); font: 12px 'Segoe UI', sans-serif; }
+.pathbar .open { line-height: 1; }
 .pathbar button:hover:not(:disabled) { background: var(--hover); }
 .pb-icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .infobar { gap: 6px; padding: 6px 0 0; font-size: 12px; line-height: 16px; }
@@ -583,11 +584,17 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 #statusbar { gap: 24px; height: 28px; align-items: center; padding: 0 12px; font-size: 12px; color: var(--muted); background: var(--chrome); }
 #st-diffs { color: var(--text); }
 #st-diffs::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--different); }
-#toolbar #folder-tools .folder-toolbar button { height: 36px; min-height: 36px; min-width: 44px; padding: 2px 4px; gap: 1px; justify-content: center; border-radius: var(--radius-sm); font-size: 11px; line-height: 13px; }
+#toolbar #folder-tools .folder-toolbar button { flex-direction: row; height: 36px; min-height: 36px; min-width: 0; padding: 0 10px; gap: 6px; justify-content: center; border-radius: var(--radius-sm); font-size: 12px; }
+#folder-tools .folder-toolbar button.folder-secondary span,
+#folder-tools .folder-toolbar button:is([data-folder-cmd="minor"], [data-folder-cmd="refresh"], [data-folder-cmd="swap"], [data-folder-cmd="cancel"], [data-folder-cmd="peek"], [data-folder-cmd="files"]) span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#toolbar #folder-tools .folder-toolbar button.folder-secondary,
+#toolbar #folder-tools .folder-toolbar button:is([data-folder-cmd="minor"], [data-folder-cmd="refresh"], [data-folder-cmd="swap"], [data-folder-cmd="cancel"], [data-folder-cmd="peek"], [data-folder-cmd="files"]) { width: 36px; padding: 0; }
 #toolbar #folder-tools .folder-toolbar button:hover:not(:disabled) { background: var(--hover); border-color: transparent; }
 #toolbar #folder-tools .folder-toolbar button[aria-pressed=true] { background: var(--mode-bg); border-color: transparent; color: var(--mode-text); }
-#toolbar #folder-tools .folder-toolbar svg { width: 16px; height: 16px; flex: 0 0 16px; }
-#folder-tools .folder-toolbar { gap: 0; align-items: center; }
+#toolbar #folder-tools .folder-toolbar svg { width: 18px; height: 18px; flex: 0 0 18px; }
+#folder-tools .folder-toolbar { gap: 4px; align-items: center; flex-wrap: wrap; }
+/* Horizontal commands can wrap inside their workspace without pushing global controls offscreen. */
+#toolbar:has(#folder-tools:not([hidden])) { height: auto; }
 #check-updates { padding: 0 8px; }
 #toolbar #folder-tools { flex: 1 1 0; min-width: 0; }
 #toolbar #check-updates, #toolbar #theme-toggle { flex: 0 0 auto; }

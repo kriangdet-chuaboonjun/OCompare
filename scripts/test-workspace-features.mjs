@@ -72,7 +72,11 @@ try {
   await page.locator('[data-mode=folders]').click()
   await page.locator('[data-root=left]').fill(left); await page.locator('[data-root=right]').fill(right)
   const compare = page.locator('[data-folder-cmd=compare]')
-  const complete = () => page.waitForFunction(() => document.querySelector('.folder-progress').textContent === 'Comparison complete')
+  const complete = async () => {
+    // Results precede the awaited history save; commands unlock only after that cleanup.
+    await page.waitForFunction(() => document.querySelector('.folder-progress').textContent === 'Comparison complete')
+    await page.waitForFunction(() => !document.querySelector('[data-folder-cmd=compare]').disabled)
+  }
   await compare.click(); await complete()
   await page.locator('[data-folder-cmd=rules]').click()
   await page.getByRole('button', { name: 'Regex rules…', exact: true }).click()

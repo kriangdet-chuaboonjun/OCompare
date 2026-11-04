@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.15] - 2026-11-04
+
+- Align the Folders toolbar with Files: horizontal icon-and-label buttons, matching icon sizes, and compact secondary commands that wrap without pushing global controls offscreen.
+- Use the compact Folders-style path bar in both modes, with matching 22px controls, Segoe UI text, and spacing while retaining file selection, Save, and parent-folder actions.
+
 ## [0.4.14] - 2026-11-03
 
 - Add a dropdown to each file path field in Files mode that lists every file open in any tab, so a side can be switched to an already open document in one click; unsaved-change confirmation still applies.

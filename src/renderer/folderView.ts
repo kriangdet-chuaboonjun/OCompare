@@ -112,6 +112,10 @@ export class FolderView {
     document.getElementById('folder-tools')!.append(toolbar)
     for (const [cmd, label] of commands) {
       const b = actionButton(label, () => this.dispatch(cmd))
+      // Keep a label element so compact commands share the Files icon-only presentation.
+      const text = document.createElement('span')
+      text.textContent = label
+      b.replaceChildren(text)
       b.prepend(toolbarIcon(cmd))
       b.dataset.folderCmd = cmd
       b.title = label
@@ -128,7 +132,9 @@ export class FolderView {
           .map(([c, l]) => [l, () => this.dispatch(c)]),
       ),
     )
-    more.prepend(toolbarIcon('more'))
+    const moreLabel = document.createElement('span')
+    moreLabel.textContent = 'More'
+    more.replaceChildren(toolbarIcon('more'), moreLabel)
     more.className = 'folder-more'
     toolbar.append(more)
     this.scroll = host.querySelector('.folder-scroll')!

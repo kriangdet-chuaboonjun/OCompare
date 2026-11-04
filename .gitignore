@@ -21,3 +21,4 @@ docs/evidence/*
 /docs/AUDIT-*.md
 playwright-report/
 coverage/
+.impeccable/critique/
