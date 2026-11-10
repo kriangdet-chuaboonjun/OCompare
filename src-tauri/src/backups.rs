@@ -287,6 +287,13 @@ impl BackupStore {
         Ok(entries)
     }
 
+    /// Every saved version of every file, newest first, for the combined History view.
+    pub fn list_all(&self) -> Result<Vec<BackupEntry>, AppError> {
+        let mut entries = self.entries()?;
+        entries.reverse();
+        Ok(entries)
+    }
+
     /// Capture the existing bytes before a write. No existing versions are pruned here.
     pub fn prepare(&self, path: &Path, reason: &str) -> Result<Option<PreparedBackup>, AppError> {
         if !matches!(reason, "Save" | "Copy" | "Restore") {

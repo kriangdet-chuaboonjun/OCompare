@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-read-compare-snapshot"
+description = "Enables the read_compare_snapshot command without any pre-configured scope."
+commands.allow = ["read_compare_snapshot"]
+
+[[permission]]
+identifier = "deny-read-compare-snapshot"
+description = "Denies the read_compare_snapshot command without any pre-configured scope."
+commands.deny = ["read_compare_snapshot"]

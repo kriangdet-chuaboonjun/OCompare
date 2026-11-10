@@ -1,6 +1,7 @@
 pub mod backups;
 #[cfg(feature = "desktop")]
 mod commands;
+pub mod compare_history;
 pub mod comparison_rules;
 pub mod encoding;
 pub mod error;
@@ -53,6 +54,10 @@ pub fn run() {
             commands::cancel_folder_compare,
             commands::load_folder_sessions,
             commands::save_folder_sessions,
+            commands::list_compare_history,
+            commands::append_compare_history,
+            commands::read_compare_snapshot,
+            commands::list_all_backup_history,
             commands::folder_disk_space,
             commands::folder_path_kinds,
             commands::plan_folder_copy,

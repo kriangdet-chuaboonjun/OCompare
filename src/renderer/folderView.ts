@@ -595,9 +595,10 @@ export class FolderView {
           ? !this.busy
           : c === 'copy'
             ? this.busy || !this.copyAllowed || !this.selected.size
-            : c === 'files' || c === 'history'
+            : c === 'files'
               ? this.busy || this.selected.size !== 1
-              : this.busy && c !== 'log'
+              // History is read-only and always available; it opens on the selected file when there is one.
+              : this.busy && c !== 'log' && c !== 'history'
       b.title = b.disabled
         ? c === 'copy'
           ? 'Compare current roots and select items before copying'

@@ -102,6 +102,47 @@ pub async fn save_folder_sessions(
         .join("folder-sessions.json");
     blocking(move || crate::folder_sessions::save(&path, &store)).await
 }
+fn compare_history_path(app: &tauri::AppHandle) -> Result<PathBuf, AppError> {
+    Ok(app
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::new("APP_DATA", e, None))?
+        .join("compare-history.json"))
+}
+#[tauri::command]
+pub async fn list_compare_history(
+    app: tauri::AppHandle,
+) -> Result<crate::compare_history::CompareHistory, AppError> {
+    let path = compare_history_path(&app)?;
+    blocking(move || crate::compare_history::load(&path)).await
+}
+#[tauri::command]
+pub async fn append_compare_history(
+    app: tauri::AppHandle,
+    entry: crate::compare_history::HistoryEntry,
+    left_text: Option<String>,
+    right_text: Option<String>,
+) -> Result<(), AppError> {
+    let path = compare_history_path(&app)?;
+    blocking(move || {
+        crate::compare_history::append_with_texts(
+            &path,
+            entry,
+            left_text.as_deref(),
+            right_text.as_deref(),
+        )
+    })
+    .await
+}
+#[tauri::command]
+pub async fn read_compare_snapshot(
+    app: tauri::AppHandle,
+    id: String,
+    side: String,
+) -> Result<String, AppError> {
+    let path = compare_history_path(&app)?;
+    blocking(move || crate::compare_history::read_snapshot(&path, &id, &side)).await
+}
 #[tauri::command]
 pub async fn folder_disk_space(path: String) -> Result<u64, AppError> {
     blocking(move || crate::folder_copy::disk_space(Path::new(&path))).await
@@ -303,6 +344,14 @@ pub async fn list_backup_history(
 ) -> Result<Vec<crate::backups::BackupEntry>, AppError> {
     let writes = writes.inner().clone();
     blocking(move || writes.with_store(|store| store.list(Path::new(&path)))).await
+}
+
+#[tauri::command]
+pub async fn list_all_backup_history(
+    writes: State<'_, Arc<crate::write_service::WriteService>>,
+) -> Result<Vec<crate::backups::BackupEntry>, AppError> {
+    let writes = writes.inner().clone();
+    blocking(move || writes.with_store(|store| store.list_all())).await
 }
 
 #[tauri::command]

@@ -127,8 +127,14 @@ export const comparisonRulesApi = {
 export const structuralApi: import('../shared/structural').StructuralApi = {
   canonicalize: (text, format) => command<string>('canonicalize_structural', { text, format }),
 }
+export const compareHistoryApi: import('../shared/compareHistory').CompareHistoryApi = {
+  list: () => command('list_compare_history'),
+  append: (entry, texts) => command('append_compare_history', { entry, leftText: texts?.leftText ?? null, rightText: texts?.rightText ?? null }),
+  readSnapshot: (id, side) => command('read_compare_snapshot', { id, side }),
+}
 export const backupApi = {
   list: (path: string) => command<import('./backupHistory').BackupEntry[]>('list_backup_history', { path }),
+  listAll: () => command<import('./backupHistory').BackupEntry[]>('list_all_backup_history'),
   snapshot: (path: string, id: string) => command<import('../shared/types').FileData>('read_backup_snapshot', { path, id }),
   restore: (path: string, id: string) => command<void>('restore_backup', { path, id }),
 }

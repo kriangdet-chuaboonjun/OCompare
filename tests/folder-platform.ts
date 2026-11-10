@@ -115,7 +115,14 @@ export const comparisonRulesApi = {
 export const structuralApi: import('../src/shared/structural').StructuralApi = {
   canonicalize: (text, format) => transport<string>('workspace', { action: 'canonicalizeStructural', text, format }),
 }
+export const compareHistoryApi: import('../src/shared/compareHistory').CompareHistoryApi = {
+  list: () => transport('workspace', { action: 'listCompareHistory' }),
+  append: (entry, texts) => transport('workspace', { action: 'appendCompareHistory', entry, leftText: texts?.leftText ?? null, rightText: texts?.rightText ?? null }),
+  // `id` is the transport's own request id, so the entry id travels as `entryId`.
+  readSnapshot: (entryId, side) => transport('workspace', { action: 'readCompareSnapshot', entryId, side }),
+}
 export const backupApi = {
+  listAll: () => transport<import('../src/renderer/backupHistory').BackupEntry[]>('workspace', { action: 'listAllHistory' }),
   list: (path: string) => transport<import('../src/renderer/backupHistory').BackupEntry[]>('workspace', { action: 'listHistory', path }),
   snapshot: (path: string, snapshotId: string) => transport<import('../src/shared/types').FileData>('workspace', { action: 'snapshot', path, snapshotId }),
   restore: (path: string, snapshotId: string) => transport<void>('workspace', { action: 'restore', path, snapshotId }),

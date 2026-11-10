@@ -23,6 +23,10 @@ export class RegexDiffAdapter {
   private nextId = 0
   private disposed = false
 
+  /** Every non-stale diff result (completed comparison) and every failure, for Compare History. */
+  onResult: ((result: { original: monaco.editor.ITextModel; modified: monaco.editor.ITextModel; leftVersion: number; rightVersion: number; changeCount: number; rulesEnabled: boolean }) => void) | null = null
+  onFailure: ((original: monaco.editor.ITextModel, modified: monaco.editor.ITextModel) => void) | null = null
+
   constructor(private normalizePair: NormalizePair, private onStatus: (message: string | null) => void = () => {}) {}
 
   readonly onDidChange = (listener: () => void): monaco.IDisposable => {
@@ -77,10 +81,12 @@ export class RegexDiffAdapter {
         new LineRange(change.modified.startLineNumber, change.modified.endLineNumberExclusive),
         change.innerChanges?.map(inner => new RangeMapping(range(inner.originalRange), range(inner.modifiedRange))),
       ))
+      this.onResult?.({ original, modified, leftVersion, rightVersion, changeCount: changes.length, rulesEnabled: this.rules.some(rule => rule.enabled) })
       return { ...result, changes }
     } catch (error) {
       if (stale()) return null
       this.onStatus(`Comparison failed: ${String(error)}`)
+      this.onFailure?.(original, modified)
       throw error
     }
   }

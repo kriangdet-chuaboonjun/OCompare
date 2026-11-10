@@ -3,6 +3,7 @@ const paths: Record<string, string> = {
   settings: 'M18.75 8.79Q18.93 9.13 19.04 9.50L19.22 10.07Q19.34 10.44 20.05 10.49L21.18 10.56Q21.90 10.61 21.90 11.39L21.90 12.61Q21.90 13.39 21.18 13.44L20.05 13.51Q19.34 13.56 19.22 13.93L19.04 14.50Q18.93 14.87 18.75 15.21L18.47 15.74Q18.29 16.08 18.77 16.63L19.51 17.48Q19.99 18.02 19.44 18.57L18.57 19.44Q18.02 19.99 17.48 19.51L16.63 18.77Q16.08 18.29 15.74 18.47L15.21 18.75Q14.87 18.93 14.50 19.04L13.93 19.22Q13.56 19.34 13.51 20.05L13.44 21.18Q13.39 21.90 12.61 21.90L11.39 21.90Q10.61 21.90 10.56 21.18L10.49 20.05Q10.44 19.34 10.07 19.22L9.50 19.04Q9.13 18.93 8.79 18.75L8.26 18.47Q7.92 18.29 7.37 18.77L6.52 19.51Q5.98 19.99 5.43 19.44L4.56 18.57Q4.01 18.02 4.49 17.48L5.23 16.63Q5.71 16.08 5.53 15.74L5.25 15.21Q5.07 14.87 4.96 14.50L4.78 13.93Q4.66 13.56 3.95 13.51L2.82 13.44Q2.10 13.39 2.10 12.61L2.10 11.39Q2.10 10.61 2.82 10.56L3.95 10.49Q4.66 10.44 4.78 10.07L4.96 9.50Q5.07 9.13 5.25 8.79L5.53 8.26Q5.71 7.92 5.23 7.37L4.49 6.52Q4.01 5.98 4.56 5.43L5.43 4.56Q5.98 4.01 6.52 4.49L7.37 5.23Q7.92 5.71 8.26 5.53L8.79 5.25Q9.13 5.07 9.50 4.96L10.07 4.78Q10.44 4.66 10.49 3.95L10.56 2.82Q10.61 2.10 11.39 2.10L12.61 2.10Q13.39 2.10 13.44 2.82L13.51 3.95Q13.56 4.66 13.93 4.78L14.50 4.96Q14.87 5.07 15.21 5.25L15.74 5.53Q16.08 5.71 16.63 5.23L17.48 4.49Q18.02 4.01 18.57 4.56L19.44 5.43Q19.99 5.98 19.51 6.52L18.77 7.37Q18.29 7.92 18.47 8.26ZM15.1 12a3.1 3.1 0 1 0-6.2 0a3.1 3.1 0 1 0 6.2 0Z',
   check: 'M5 12l4 4L19 6',
   history: 'M3 12a9 9 0 1 0 3-7M3 3v5h5m4-1v6l4 2',
+  compare: 'M4 6h7M4 12h7M4 18h7M15 6h5M15 12h5M15 18h5M13 3v18',
   watch: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm7 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0',
   sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5',
   moon: 'M20.5 13A9 9 0 0 1 11 3.5 9 9 0 1 0 20.5 13Z',
@@ -49,7 +50,7 @@ export function toolbarIcon(command: string): SVGSVGElement {
 
 /** Replace font glyphs with the same vectors used by folder commands, preserving labels and handlers. */
 export function initializeToolbarIcons(): void {
-  const commands: Record<string, string> = { rules: 'rules', structural: 'structure', history: 'history', viewAll: 'all', viewDiffs: 'diffs', viewContext: 'context', ignoreWs: 'minor', wrap: 'wrap', copyToRight: 'copyRight', copyToLeft: 'copyLeft', nextDiff: 'next', prevDiff: 'previous', swap: 'swap', reload: 'refresh' }
+  const commands: Record<string, string> = { rules: 'rules', structural: 'structure', history: 'history', compare: 'compare', viewAll: 'all', viewDiffs: 'diffs', viewContext: 'context', ignoreWs: 'minor', wrap: 'wrap', copyToRight: 'copyRight', copyToLeft: 'copyLeft', nextDiff: 'next', prevDiff: 'previous', swap: 'swap', reload: 'refresh' }
   document.querySelectorAll<HTMLButtonElement>('#file-tools button[data-cmd]').forEach(button => {
     const label = button.querySelector('span')!
     button.replaceChildren(toolbarIcon(commands[button.dataset.cmd!]), label)

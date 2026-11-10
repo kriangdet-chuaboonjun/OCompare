@@ -149,6 +149,27 @@ fn run(
             folder_sessions::save(sessions, &v["store"])?;
             Ok(Value::Null)
         }
+        "listCompareHistory" => Ok(json!(o_compare_rust::compare_history::load(
+            &sessions.with_extension("compare-history.json")
+        )?)),
+        "appendCompareHistory" => {
+            let entry: o_compare_rust::compare_history::HistoryEntry =
+                serde_json::from_value(v["entry"].clone())
+                    .map_err(|e| AppError::new("HISTORY_FORMAT", e, None))?;
+            o_compare_rust::compare_history::append_with_texts(
+                &sessions.with_extension("compare-history.json"),
+                entry,
+                v["leftText"].as_str(),
+                v["rightText"].as_str(),
+            )?;
+            Ok(Value::Null)
+        }
+        "readCompareSnapshot" => Ok(json!(o_compare_rust::compare_history::read_snapshot(
+            &sessions.with_extension("compare-history.json"),
+            string(v, "entryId")?,
+            string(v, "side")?
+        )?)),
+        "listAllHistory" => writes.with_store(|store| Ok(json!(store.list_all()?))),
         "diskSpace" => Ok(json!(o_compare_rust::folder_copy::disk_space(Path::new(
             string(v, "path")?
         ))?)),
