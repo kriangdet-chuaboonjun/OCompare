@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.4.17] - 2026-11-10
+
+- Record every completed Files and Folders comparison automatically (one entry per run, even when nothing differs). Canceled or failed comparisons are not recorded, and a failed save is reported without hiding the comparison.
+- Record comparisons of pasted text too: text pasted into a side with no file is stored with the entry and can be reopened later, also when the other side is a file.
+- Merge History into one dialog: a single newest-first timeline of comparisons and saved versions, with filters (All, Comparisons, Saved versions), a path search, and Open for comparisons or Compare with current and Restore for saved versions. The History button in Files starts on the focused file's saved versions; in Folders it is always available.
+- Add a Compare button to the Files toolbar that re-reads both files from disk (or uses the pasted text) and compares again as a new recorded run.
+
 ## [0.4.16] - 2026-11-04
 
 - Keep Files and Folders commands on one toolbar row when resizing; move commands that do not fit into the More commands menu and restore them when the window widens.
