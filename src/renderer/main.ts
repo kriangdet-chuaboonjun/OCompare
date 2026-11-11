@@ -4,7 +4,7 @@ import { FileTabs, documentDirty, documentKey, type FileTab } from './fileTabs'
 import { RegexDiffAdapter } from './regexDiff'
 import { detectFormat, editorLanguage, isVirtualPath, structuralPath, virtualKind } from './structural'
 import { openComparisonRules } from './comparisonRules'
-import { openHistory } from './backupHistory'
+import { openBackupHistory } from './backupHistory'
 import { unsavedChoice } from './unsavedDialog'
 import { mountUpdater } from './updateDialog'
 import { updaterApi } from './updateNative'
@@ -12,9 +12,8 @@ import { WorkspaceInstallGuard } from '../shared/installGuard'
 import * as monaco from 'monaco-editor'
 import type { FileData, Side } from '../shared/types'
 import type { FolderEntry } from '../shared/folders'
-import { CompareHistoryStore, describeHistoryError } from './compareHistory'
-import { PASTED_TEXT, type CompareHistoryEntry } from '../shared/compareHistory'
-import { api, folderApi, comparisonRulesApi, structuralApi, backupApi, compareHistoryApi, confirm, getStartupComparison, initializePlatform, setTitle, toError, type DropEvent } from './platform'
+import { api, folderApi, comparisonRulesApi, structuralApi, backupApi, tabDraftApi, confirm, confirmRetry, getStartupComparison, initializePlatform, setTitle, toError, type DropEvent } from './platform'
+import { snapshotTabs, restoreTabs, describeRestore, diskNotice, clearDiskNotice, noticeLabel } from './tabRecovery'
 import { FolderController } from './folderController'
 import { FolderTabs } from './folderTabs'
 import { SessionStorage } from './folderSessions'
@@ -52,22 +51,6 @@ let mode: 'files' | 'folders' = 'files'
 let installationLocked = false
 const pendingActions = new Set<Promise<unknown>>()
 const folderSessions = new SessionStorage(folderApi)
-/** One store for Files and Folders runs; a failed save is reported but never hides the comparison. */
-const compareHistory = new CompareHistoryStore(compareHistoryApi)
-void compareHistory.ready.then(() => { if (!compareHistory.usable) status(`Compare history could not be read: ${toError(compareHistory.loadError).message}`) })
-regexAdapter.onResult = ({ original, modified, leftVersion, rightVersion, changeCount, rulesEnabled }) => view.diffComputed(original, modified, leftVersion, rightVersion, changeCount, rulesEnabled)
-regexAdapter.onFailure = (original, modified) => view.diffFailed(original, modified)
-view.onCompareComplete(({ leftPath, rightPath, leftText, rightText, changeCount, rulesEnabled }) => {
-  // A side with no file is pasted text: its content is stored with the entry so it can be reopened later.
-  compareHistory.record({
-    kind: 'file', leftPath: leftPath ?? PASTED_TEXT, rightPath: rightPath ?? PASTED_TEXT,
-    ...(leftPath === null ? { leftText: true } : {}), ...(rightPath === null ? { rightText: true } : {}),
-    result: { status: changeCount === 0 ? 'identical' : 'different', changeCount, ...(rulesEnabled ? { rulesApplied: true } : {}) },
-  }, { ...(leftText !== undefined ? { leftText } : {}), ...(rightText !== undefined ? { rightText } : {}) })
-    .catch(error => status(describeHistoryError(error)))
-})
-/** A Files run starts when a real file pair has just been loaded from disk; only the active tab is diffed. */
-function armFileCompare(tab: FileTab): boolean { return tab === tabs.active && view.armCompare(tab.sides) }
 /** One controller per folder tab; the sessions store is shared so saves never overwrite each other. */
 const folderTabs = new FolderTabs(document.getElementById('folder-panel')!, (id, host, guard) => {
   const controller: FolderController = new FolderController(host, folderApi, id, folderSessions, guard, entry => openFolderEntry(controller, entry), () => {
@@ -76,7 +59,6 @@ const folderTabs = new FolderTabs(document.getElementById('folder-panel')!, (id,
     renderStatus()
   }, () => getAllDirtyPaths())
   controller.onHistory = showHistory
-  controller.onCompleted = entry => compareHistory.record(entry)
   controller.onRegexRules = async () => {
     const rules = await openComparisonRules({ rules: controller.rules.regexRules ?? [], ...comparisonRulesApi })
     if (rules) { controller.rules = { ...controller.rules, regexRules: rules }; controller.markStale('Rules changed — press Refresh') }
@@ -191,7 +173,7 @@ function renderHeaders(): void {
       for (const path of paths) choices.add(new Option(path, path))
       choices.value = ''
     }
-    $<HTMLElement>('.dirty', h).textContent = dirty ? '● modified' : ''
+    $<HTMLElement>('.dirty', h).textContent = dirty ? `● modified${noticeLabel(s)}` : ''
     $<HTMLElement>('.mtime', h).textContent = fmtDate(s.mtimeMs)
     $<HTMLElement>('.size', h).textContent = fmtSize(s.size)
     $<HTMLSelectElement>('.lang', h).value = s.model.getLanguageId()
@@ -263,11 +245,8 @@ async function openFolderEntry(controller: FolderController, entry: FolderEntry)
   const duplicate = tabs.findPair(files[0].path, files[1].path)
   const tab = duplicate ?? tabs.create()
   if (!duplicate) tab.regexRules = structuredClone(controller.rules.regexRules ?? [])
-  if (!duplicate) {
-    const docs = SIDES.map((side, index) => tabs.replace(tab, side, files[index]))
-    armFileCompare(tab)
-    for (const doc of docs) await watchDocument(doc)
-  } else tabs.activate(tab.id)
+  if (!duplicate) for (const [index, side] of SIDES.entries()) await watchDocument(tabs.replace(tab, side, files[index]))
+  else tabs.activate(tab.id)
   setMode('files')
   status(`Opened ${entry.relativePath}`)
 }
@@ -279,7 +258,7 @@ window.addEventListener('pagehide', () => folderTabs.dispose(), { once: true })
 async function watchDocument(doc: SideState): Promise<void> { if (!isVirtualPath(doc.path)) await api.watchFile(doc.id, doc.path) }
 
 /** Async reads are bound to the original tab and side; switching tabs is harmless. */
-async function loadFile(side: Side, path: string, tab: FileTab = tabs.active, ask = true, arm = true): Promise<void> {
+async function loadFile(side: Side, path: string, tab: FileTab = tabs.active, ask = true): Promise<void> {
   const state = tab.sides[side]
   if (ask && !await resolveUnsaved([state])) return
   const request = (loadRequests.get(state) ?? 0) + 1
@@ -289,11 +268,8 @@ async function loadFile(side: Side, path: string, tab: FileTab = tabs.active, as
     const file = await api.readFile(path)
     if (!tabs.tabs.includes(tab) || loadRequests.get(state) !== request || tab.sides[side] !== state) return
     if (state.model.getAlternativeVersionId() !== version) throw new Error('The document changed while reading. Please open the file again.')
-    let loaded = state
-    if (tabs.findDocument(file.path) === state) view.loadDocument(state, file)
-    else loaded = tabs.replace(tab, side, file)
-    if (arm) armFileCompare(tab)
-    await watchDocument(loaded)
+    if (tabs.findDocument(file.path) === state) { view.loadDocument(state, file); await watchDocument(state) }
+    else await watchDocument(tabs.replace(tab, side, file))
     status(`Opened ${file.path}`)
   } catch (error) { status(`Cannot open ${path}: ${toError(error).message}`) }
 }
@@ -318,7 +294,11 @@ async function performSave(doc: SideState): Promise<boolean> {
   const originalPath = doc.path
   if (isVirtualPath(originalPath)) { status(`${virtualKind(originalPath) === 'History' ? 'History snapshots' : 'Structural views'} are read-only`); return false }
   let path = originalPath
-  if (!path) { path = await api.saveDialog(); if (!path) return false }
+  // A draft restored after a restart may no longer match its file: a vanished file is saved through the dialog,
+  // a changed one only after the user agrees to replace what is on disk now.
+  const notice = diskNotice(doc)
+  if (!path || notice === 'missing') { path = await api.saveDialog(originalPath ?? undefined); if (!path) return false }
+  else if (notice === 'changed' && !await confirm(`${path} changed on disk after these edits were stored.\n\nSaving replaces its current contents (the previous version is kept in History). Save anyway?`)) return false
   if (doc.model.isDisposed()) return false
   const other = tabs.findDocument(path)
   if (other && other !== doc) { status('That file is already open. Save to a different path.'); return false }
@@ -332,6 +312,7 @@ async function performSave(doc: SideState): Promise<boolean> {
     if (!doc.model.isDisposed() && doc.path === originalPath) {
       doc.path = path
       view.markDocumentSaved(doc, stat.size, stat.mtimeMs, version)
+      clearDiskNotice(doc)
       await watchDocument(doc)
     }
     status(`Saved ${path}`)
@@ -340,6 +321,25 @@ async function performSave(doc: SideState): Promise<boolean> {
   finally { reservedSavePaths.delete(key) }
 }
 async function saveFile(side: Side): Promise<boolean> { return saveDocument(view.sides[side]) }
+
+// Save acts on the side the mouse pointer is over (path bar or editor pane), not on the focused editor.
+// Only the last pointer position is kept; the side is worked out when Save is pressed.
+let lastPointer: { x: number; y: number } | null = null
+const within = (rect: DOMRect, x: number, y: number) => x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+function sideUnderPointer(x: number, y: number): Side | null {
+  for (const side of SIDES) if (within(head(side).getBoundingClientRect(), x, y)) return side
+  if (!within(document.getElementById('editor')!.getBoundingClientRect(), x, y)) return null
+  // The divider (gutter, copy arrows, overview ruler) belongs to whichever pane it is closer to.
+  const left = view.editorFor('left').getDomNode()!.getBoundingClientRect()
+  const right = view.editorFor('right').getDomNode()!.getBoundingClientRect()
+  return x < (left.right + right.left) / 2 ? 'left' : 'right'
+}
+/** The side to save: under the pointer when it is over one, else `fallback` (the focused editor). */
+function saveTarget(fallback: Side = view.focusedSide): Side {
+  return lastPointer ? sideUnderPointer(lastPointer.x, lastPointer.y) ?? fallback : fallback
+}
+document.addEventListener('pointermove', event => { lastPointer = { x: event.clientX, y: event.clientY } }, { capture: true, passive: true })
+document.documentElement.addEventListener('pointerleave', () => { lastPointer = null })
 
 async function resolveUnsaved(documents: SideState[]): Promise<boolean> {
   for (const doc of new Set(documents)) {
@@ -382,26 +382,6 @@ async function reload(): Promise<void> {
   }
 }
 
-/** Compare button: re-read both files from disk, then run the comparison again as a new recorded run. */
-async function compareAgain(): Promise<void> {
-  const tab = tabs.active
-  if (SIDES.some(side => isVirtualPath(tab.sides[side].path))) { status('History and structural views cannot be compared again'); return }
-  // Sides backed by a file are re-read from disk; a side that is only pasted text is compared as it stands.
-  const docs = [...new Set(SIDES.map(side => tab.sides[side]))].filter(doc => doc.path)
-  if (!await resolveUnsaved(docs)) { status('Compare canceled'); return }
-  const versions = docs.map(doc => doc.model.getAlternativeVersionId())
-  const requests = docs.map(doc => { const request = (loadRequests.get(doc) ?? 0) + 1; loadRequests.set(doc, request); return request })
-  const files = await Promise.all(docs.map(doc => api.readFile(doc.path!)))
-  const unchanged = tabs.tabs.includes(tab) && SIDES.every(side => tab.sides[side].path ? docs.includes(tab.sides[side]) : true)
-    && docs.every((doc, i) => loadRequests.get(doc) === requests[i] && !doc.model.isDisposed() && doc.model.getAlternativeVersionId() === versions[i])
-  if (!unchanged) return
-  docs.forEach((doc, i) => view.loadDocument(doc, files[i]))
-  if (!armFileCompare(tab)) { status('Open a file or paste some text on both sides to compare'); return }
-  // Pasted text alone gives Monaco no reason to recompute, so ask for it.
-  if (docs.length === 0) view.recompareNow()
-  status(`Comparing ${SIDES.map(side => tab.sides[side].path ?? 'pasted text').join(' ↔ ')}`)
-}
-
 const deferredFileChanges = new Set<string>()
 function fileChanged(documentId: string): void {
   if (installationLocked) { deferredFileChanges.add(documentId); return }
@@ -437,19 +417,18 @@ const commands: Record<string, () => void | Promise<unknown>> = {
     tabs.swap()
   },
   reload: () => reload(),
-  compare: () => compareAgain(),
   rules: async () => {
     const tab = tabs.active
     const rules = await openComparisonRules({ rules: tab.regexRules, ...comparisonRulesApi })
     if (rules && tabs.tabs.includes(tab)) { tab.regexRules = rules; tabs.changed() }
   },
   structural: () => openStructural(),
-  // With a saved file in focus the dialog starts on that file's versions; otherwise it shows everything.
   history: () => {
     const path = getSelectedHistoryPath()
-    return showHistory(path && !isVirtualPath(path) ? path : null)
+    if (!path || isVirtualPath(path)) { status('Select a saved file to view History'); return }
+    return showHistory(path)
   },
-  save: () => saveFile(view.focusedSide)
+  save: () => saveFile(saveTarget())
 }
 
 let structuralBusy = false
@@ -486,41 +465,9 @@ async function openStructural(): Promise<void> {
   } finally { structuralBusy = false }
 }
 
-/** Reopen a recorded comparison: files from disk, pasted text from its snapshot, folders as a new run. */
-async function openRun(run: CompareHistoryEntry): Promise<void> {
-  if (run.kind === 'folder') {
-    const controller = activeFolders()
-    controller.setRoot('left', run.leftPath)
-    controller.setRoot('right', run.rightPath)
-    setMode('folders')
-    await controller.compare()
-    return
-  }
-  const files = await Promise.all(SIDES.map(async (side): Promise<FileData> => {
-    const pasted = side === 'left' ? run.leftText : run.rightText
-    if (pasted) {
-      const text = await compareHistory.readSnapshot(run.id, side)
-      return { path: '', text, encoding: 'utf-8', bom: false, eol: text.includes('\r\n') ? 'CRLF' : 'LF', size: new TextEncoder().encode(text).length, mtimeMs: run.createdAtMs }
-    }
-    return api.readFile(side === 'left' ? run.leftPath : run.rightPath)
-  }))
-  const tab = tabs.create()
-  // replace() reuses a document that is already open (with any unsaved edits) instead of overwriting it.
-  // Looking at an old comparison is not a new run, so nothing is armed.
-  SIDES.forEach((side, index) => tabs.replace(tab, side, files[index]))
-  for (const side of SIDES) await watchDocument(tab.sides[side])
-  setMode('files')
-  status(`Opened comparison from ${new Date(run.createdAtMs).toLocaleString()}`)
-}
-
-async function showHistory(path: string | null): Promise<void> {
-  await openHistory(path, {
+async function showHistory(path: string): Promise<void> {
+  await openBackupHistory(path, {
     list: backupApi.list,
-    listAll: backupApi.listAll,
-    runs: () => compareHistory.entries,
-    onRunsChange: listener => compareHistory.onChange(listener),
-    runsError: () => compareHistory.usable ? null : toError(compareHistory.loadError).message,
-    openRun,
     confirm,
     isDirty: target => getAllDirtyPaths().some(p => documentKey(p) === documentKey(target)),
     restore: async (target, id) => {
@@ -560,7 +507,7 @@ for (const side of SIDES) {
   ed.addCommand(K.CtrlCmd | C.KeyW, () => run(() => closeTab(tabs.active)))
   ed.addCommand(K.CtrlCmd | C.Tab, () => cycleTab(1))
   ed.addCommand(K.CtrlCmd | K.Shift | C.Tab, () => cycleTab(-1))
-  ed.addCommand(K.CtrlCmd | C.KeyS, () => run(() => saveFile(side)))
+  ed.addCommand(K.CtrlCmd | C.KeyS, () => run(() => saveFile(saveTarget(side))))
   ed.addCommand(C.F7, commands.nextDiff)
   ed.addCommand(K.Shift | C.F7, commands.prevDiff)
   ed.addCommand(K.CtrlCmd | C.KeyN, commands.nextDiff)
@@ -670,7 +617,6 @@ function handleDrop(event: DropEvent): void {
       const files = await Promise.all(event.paths.slice(0, 2).map(path => api.readFile(path)))
       if (!tabs.tabs.includes(tab) || SIDES.some((side, i) => tab.sides[side] !== docs[i] || docs[i].model.getAlternativeVersionId() !== versions[i])) return
       for (const [index, side] of SIDES.entries()) tabs.replace(tab, side, files[index])
-      armFileCompare(tab)
       await Promise.all(SIDES.map(side => watchDocument(tab.sides[side])))
     })
   } else if (event.paths.length === 1) run(() => loadFile(sideAt(event.x), event.paths[0]))
@@ -701,17 +647,43 @@ const updates = mountUpdater(__APP_VERSION__, updaterApi, new WorkspaceInstallGu
   settle: async () => {
     await Promise.all([...pendingActions, ...pendingSaves.values(), folderTabs.settleActions()])
   },
-  resolveUnsaved: () => resolveUnsaved(tabs.documents()),
+  // The installer closes the app without a close request: once every edit is saved or discarded there is nothing to recover.
+  resolveUnsaved: async () => await resolveUnsaved(tabs.documents()) && await forgetDrafts(),
 }))
-// Browser-only development/tests do not have native IPC and never contact the release service.
-if ('__TAURI_INTERNALS__' in window) void updates.check(false)
-run(async () => {
-  await initializePlatform(handleDrop, status, async () => {
-    if (installationLocked) return false
-    if (!folderTabs.busy) return resolveUnsaved(tabs.documents())
-    status('A folder job is running. Use Stop and wait for completion before closing.')
-    return false
-  })
+
+/**
+ * Normal close: keep every tab with unsaved text for the next start instead of asking Save/Discard.
+ * If the recovery data cannot be written the window stays open so the user can retry or save the files.
+ */
+async function storeDrafts(): Promise<boolean> {
+  await Promise.allSettled([...pendingSaves.values()])
+  for (;;) {
+    try {
+      const store = snapshotTabs(tabs, view)
+      if (store) await tabDraftApi.save(store); else await tabDraftApi.clear()
+      return true
+    } catch (error) {
+      const text = `Unsaved work could not be stored for recovery: ${toError(error).message}`
+      status(text)
+      if (!await confirmRetry(`${text}\n\nThe window stays open so you can save your files.`)) return false
+    }
+  }
+}
+async function forgetDrafts(): Promise<boolean> {
+  try { await tabDraftApi.clear(); return true }
+  catch (error) { status(`Stored recovery data could not be removed: ${toError(error).message}`); return false }
+}
+/** Rebuild the tabs stored by the previous normal close; problems are reported, never fatal. */
+async function restoreDrafts(): Promise<string> {
+  try {
+    const report = await restoreTabs(await tabDraftApi.load(), { tabs, view, readFile: path => api.readFile(path), watch: watchDocument })
+    restoredTabs = report.tabs
+    return report.tabs ? describeRestore(report) : ''
+  } catch (error) { return `Recovery data could not be read: ${toError(error).message}` }
+}
+let restoredTabs = 0
+/** An Explorer launch opens beside the restored tabs instead of replacing them. */
+async function openStartupComparison(): Promise<void> {
   const startup = await getStartupComparison()
   if (!startup) return
   if (startup.mode === 'folders') {
@@ -721,8 +693,20 @@ run(async () => {
     setMode('folders')
     await startupTab.compare()
   } else {
-    const startupTab = tabs.active
-    await Promise.all(SIDES.map((side, i) => startup.paths[i] ? loadFile(side, startup.paths[i], startupTab, true, false) : Promise.resolve()))
-    armFileCompare(startupTab)
+    const tab = restoredTabs ? tabs.create() : tabs.active
+    await Promise.all(SIDES.map((side, i) => startup.paths[i] ? loadFile(side, startup.paths[i], tab) : Promise.resolve()))
   }
+}
+// Browser-only development/tests do not have native IPC and never contact the release service.
+if ('__TAURI_INTERNALS__' in window) void updates.check(false)
+run(async () => {
+  await initializePlatform(handleDrop, status, async () => {
+    if (installationLocked) return false
+    if (!folderTabs.busy) return storeDrafts()
+    status('A folder job is running. Use Stop and wait for completion before closing.')
+    return false
+  })
+  const restored = await restoreDrafts()
+  if (restored) status(restored)
+  try { await openStartupComparison() } finally { if (restored) status(restored) }
 })

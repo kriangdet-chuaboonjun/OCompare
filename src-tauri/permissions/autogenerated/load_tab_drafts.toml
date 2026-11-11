@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-load-tab-drafts"
+description = "Enables the load_tab_drafts command without any pre-configured scope."
+commands.allow = ["load_tab_drafts"]
+
+[[permission]]
+identifier = "deny-load-tab-drafts"
+description = "Denies the load_tab_drafts command without any pre-configured scope."
+commands.deny = ["load_tab_drafts"]

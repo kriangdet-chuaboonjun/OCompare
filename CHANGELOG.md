@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.4.18] - 2026-11-11
+
+- Restore unsaved Files tabs after a normal close: closing the window stores every tab with unsaved text (Ctrl+T tabs and edited files, both sides, Thai included) in the app data folder without asking Save or Discard, and the next start brings them back in the same order, still modified, with the active tab selected. Original files change only when you press Save. If a file changed, moved or was deleted meanwhile, the draft is still restored and flagged: Save asks before replacing a changed file (the old version goes to History) and uses Save As for a missing one. If the recovery data cannot be written, OCompare says so and keeps the window open so you can try again or save your files. A comparison launched from Explorer opens in a new tab beside the restored ones.
+- Save (Ctrl+S) now saves the side the mouse pointer is over, whether it is that side's editor or path bar; when the pointer is over neither side it still saves the focused editor.
+- Remove Compare History and the Files Compare button added in 0.4.17. History is again only the Backup history: copies of a file made before Save, Copy or Restore, used to restore the file.
+
 ## [0.4.17] - 2026-11-10
 
 - Record every completed Files and Folders comparison automatically (one entry per run, even when nothing differs). Canceled or failed comparisons are not recorded, and a failed save is reported without hiding the comparison.

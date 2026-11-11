@@ -1,7 +1,6 @@
 pub mod backups;
 #[cfg(feature = "desktop")]
 mod commands;
-pub mod compare_history;
 pub mod comparison_rules;
 pub mod encoding;
 pub mod error;
@@ -13,6 +12,7 @@ pub mod folder_watch;
 pub mod folders;
 pub mod startup;
 pub mod structural;
+pub mod tab_drafts;
 pub mod watcher;
 pub mod write_service;
 
@@ -54,15 +54,14 @@ pub fn run() {
             commands::cancel_folder_compare,
             commands::load_folder_sessions,
             commands::save_folder_sessions,
-            commands::list_compare_history,
-            commands::append_compare_history,
-            commands::read_compare_snapshot,
-            commands::list_all_backup_history,
             commands::folder_disk_space,
             commands::folder_path_kinds,
             commands::plan_folder_copy,
             commands::execute_folder_copy,
-            commands::discard_folder_copy
+            commands::discard_folder_copy,
+            commands::load_tab_drafts,
+            commands::save_tab_drafts,
+            commands::clear_tab_drafts
         ])
         .run(tauri::generate_context!())
         .expect("Could not run OCompare");

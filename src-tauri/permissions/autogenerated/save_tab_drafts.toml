@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-tab-drafts"
+description = "Enables the save_tab_drafts command without any pre-configured scope."
+commands.allow = ["save_tab_drafts"]
+
+[[permission]]
+identifier = "deny-save-tab-drafts"
+description = "Denies the save_tab_drafts command without any pre-configured scope."
+commands.deny = ["save_tab_drafts"]

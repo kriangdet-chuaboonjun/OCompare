@@ -50,6 +50,30 @@ export class FileTabs {
     return tab
   }
 
+  /**
+   * Add tabs rebuilt from stored drafts. An untouched starting tab gives way to them and the
+   * stored active tab (else the first) is shown; if the user already started working, they are only appended.
+   */
+  restore(items: Array<Pick<FileTab, 'sides' | 'focused' | 'options' | 'regexRules'>>, activeIndex: number | null): void {
+    if (!items.length) return
+    const untouched = (doc: SideState) => !doc.path && !doc.model.getValueLength() && !documentDirty(doc)
+    const initial = this.tabs.length === 1 && this.tabs[0] === this.active && untouched(this.active.sides.left) && untouched(this.active.sides.right) ? this.active : null
+    const created = items.map(item => {
+      const tab = this.make(item.sides)
+      tab.focused = item.focused
+      tab.options = { ...item.options }
+      tab.regexRules = item.regexRules.map(rule => ({ ...rule }))
+      return tab
+    })
+    if (initial) this.tabs.splice(0, 1)
+    this.tabs.push(...created)
+    if (initial) {
+      this.activate((created[activeIndex ?? 0] ?? created[0]).id)
+      this.release(initial.sides.left); this.release(initial.sides.right)
+    }
+    this.changed()
+  }
+
   activate(id: string): void {
     const next = this.tabs.find(tab => tab.id === id)
     if (!next) return

@@ -21,15 +21,14 @@ fn main() {
                 "cancel_folder_compare",
                 "load_folder_sessions",
                 "save_folder_sessions",
-                "list_compare_history",
-                "append_compare_history",
-                "read_compare_snapshot",
-                "list_all_backup_history",
                 "folder_disk_space",
                 "folder_path_kinds",
                 "plan_folder_copy",
                 "execute_folder_copy",
                 "discard_folder_copy",
+                "load_tab_drafts",
+                "save_tab_drafts",
+                "clear_tab_drafts",
             ]),
         ))
         .expect("Tauri build configuration failed");

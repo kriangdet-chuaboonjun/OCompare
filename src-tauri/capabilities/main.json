@@ -15,7 +15,8 @@
     "allow-validate-comparison-rules", "allow-normalize-comparison-pair", "allow-canonicalize-structural",
     "allow-list-backup-history", "allow-read-backup-snapshot", "allow-restore-backup",
     "allow-compare-folders", "allow-cancel-folder-compare",
-    "allow-load-folder-sessions", "allow-save-folder-sessions", "allow-list-compare-history", "allow-append-compare-history", "allow-read-compare-snapshot", "allow-list-all-backup-history", "allow-folder-disk-space", "allow-folder-path-kinds",
-    "allow-plan-folder-copy", "allow-execute-folder-copy", "allow-discard-folder-copy"
+    "allow-load-folder-sessions", "allow-save-folder-sessions", "allow-folder-disk-space", "allow-folder-path-kinds",
+    "allow-plan-folder-copy", "allow-execute-folder-copy", "allow-discard-folder-copy",
+    "allow-load-tab-drafts", "allow-save-tab-drafts", "allow-clear-tab-drafts"
   ]
 }

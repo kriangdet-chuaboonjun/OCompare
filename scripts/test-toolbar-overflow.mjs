@@ -49,8 +49,7 @@ try {
   await page.locator('[data-mode=folders]').click()
   await geometry()
   await more.click()
-  // History is one combined, read-only view: it opens even with nothing selected.
-  assert.notEqual(await menu.getByRole('menuitem', { name: 'History', exact: true }).getAttribute('aria-disabled'), 'true')
+  assert.equal(await menu.getByRole('menuitem', { name: 'History', exact: true }).getAttribute('aria-disabled'), 'true')
   await menu.getByRole('menuitemcheckbox', { name: 'Log', exact: true }).click()
   assert.equal(await page.locator('.folder-log-wrap').isVisible(), false, 'Overflow changes folder view state')
   await more.click()

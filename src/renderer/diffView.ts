@@ -21,19 +21,6 @@ export interface SideState {
 type Listener = () => void
 let documentSequence = 0
 
-/** One completed Files comparison: the diff Monaco computed for a pair armed by `armCompare`. */
-export interface FileCompareResult {
-  /** null when that side is pasted text with no file; its content is then in leftText/rightText. */
-  leftPath: string | null
-  rightPath: string | null
-  leftText?: string
-  rightText?: string
-  changeCount: number
-  /** At least one regex rule was enabled when the diff was computed. */
-  rulesEnabled: boolean
-}
-interface PendingCompare { left: SideState; right: SideState; leftVersion: number; rightVersion: number }
-
 /**
  * Wraps Monaco's DiffEditor: both sides are editable and Monaco recomputes
  * the diff after every edit, so recomparison is automatic.
@@ -48,8 +35,6 @@ export class DiffView {
   private recompareKick = false
   private editingSuspended = false
   private pairViewModel: monaco.editor.IDiffEditorViewModel | undefined
-  private pendingCompare: PendingCompare | null = null
-  private compareListeners: Array<(result: FileCompareResult) => void> = []
 
   constructor(host: HTMLElement, services?: monaco.editor.IEditorOverrideServices) {
     this.editor = monaco.editor.createDiffEditor(host, {
@@ -87,8 +72,6 @@ export class DiffView {
     })
     for (const side of ['left', 'right'] as Side[]) {
       const ed = this.editorFor(side)
-      // Pasting text into a side with no file is a deliberate "compare this" act; typing is not.
-      ed.onDidPaste(() => { if (!this.sides[side].path) this.armCompare(this.sides) })
       ed.onDidFocusEditorText(() => {
         this.focused = side
         this.emit()
@@ -117,8 +100,6 @@ export class DiffView {
   /** Attach persistent models without replacing their edit histories. */
   attach(sides: Record<Side, SideState>, focused: Side = 'right'): void {
     this.filter.apply(null)
-    const pending = this.pendingCompare
-    if (pending && (pending.left !== sides.left || pending.right !== sides.right)) this.pendingCompare = null
     this.sides.left = sides.left
     this.sides.right = sides.right
     this.focused = focused
@@ -129,55 +110,6 @@ export class DiffView {
 
   onChange(fn: Listener): void {
     this.listeners.push(fn)
-  }
-
-  /**
-   * Monaco diffs continuously, so there is no "run" of its own. A run starts when a real file pair is
-   * loaded or compared again (`armCompare`) and ends with the first diff computed for exactly those
-   * models and text versions. An edit, a tab switch, a swap or a failure before then drops the run.
-   */
-  onCompareComplete(fn: (result: FileCompareResult) => void): void {
-    this.compareListeners.push(fn)
-  }
-
-  /**
-   * Returns false (and arms nothing) unless these are the attached models and each side is either an
-   * unmodified file or non-empty pasted text (no file). History snapshots and structural tabs never count.
-   */
-  armCompare(sides: Record<Side, SideState>): boolean {
-    this.pendingCompare = null
-    const usable = (side: SideState) => {
-      if (side.model.isDisposed() || isVirtualPath(side.path)) return false
-      if (side.path) return side.model.getAlternativeVersionId() === side.savedVersion
-      return side.model.getValueLength() > 0
-    }
-    if (sides.left !== this.sides.left || sides.right !== this.sides.right || !usable(sides.left) || !usable(sides.right)) return false
-    const run: PendingCompare = {
-      left: sides.left, right: sides.right,
-      leftVersion: sides.left.model.getVersionId(), rightVersion: sides.right.model.getVersionId(),
-    }
-    this.pendingCompare = run
-    // Monaco may skip a recompute when a reload leaves both texts unchanged; force one so the run always ends.
-    setTimeout(() => { if (this.pendingCompare === run) this.recompareNow() }, 800)
-    return true
-  }
-
-  /** Called by the diff provider for every non-stale result. */
-  diffComputed(original: monaco.editor.ITextModel, modified: monaco.editor.ITextModel, leftVersion: number, rightVersion: number, changeCount: number, rulesEnabled: boolean): void {
-    const run = this.pendingCompare
-    if (!run || run.left.model !== original || run.right.model !== modified) return
-    this.pendingCompare = null
-    if (run.leftVersion !== leftVersion || run.rightVersion !== rightVersion) return
-    const result: FileCompareResult = { leftPath: run.left.path, rightPath: run.right.path, changeCount, rulesEnabled }
-    if (!run.left.path) result.leftText = run.left.model.getValue()
-    if (!run.right.path) result.rightText = run.right.model.getValue()
-    this.compareListeners.forEach((fn) => fn(result))
-  }
-
-  /** The diff provider failed for this pair: the run is abandoned without a record. */
-  diffFailed(original: monaco.editor.ITextModel, modified: monaco.editor.ITextModel): void {
-    const run = this.pendingCompare
-    if (run && run.left.model === original && run.right.model === modified) this.pendingCompare = null
   }
 
   private emit(): void {
@@ -456,7 +388,7 @@ export class DiffView {
    * (LineFilter does the hiding), so flipping one of them forces an immediate
    * recompare with no other effect.
    */
-  recompareNow(): void {
+  private recompareNow(): void {
     this.recompareKick = !this.recompareKick
     this.editor.updateOptions({ hideUnchangedRegions: { enabled: false, contextLineCount: this.recompareKick ? 4 : 3 } })
   }
@@ -465,7 +397,6 @@ export class DiffView {
     const { left, right } = this.sides
     this.sides.left = right
     this.sides.right = left
-    this.pendingCompare = null
     this.applyModels()
     this.applyReadOnly()
     this.emit()

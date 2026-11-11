@@ -7,8 +7,6 @@ import type {
   FolderSession,
 } from '../shared/folders'
 import type { Side } from '../shared/types'
-import type { NewCompareHistoryEntry } from '../shared/compareHistory'
-import { describeHistoryError } from './compareHistory'
 import { FolderView } from './folderView'
 import { actionButton, commandMenu, showDialog } from './folderChrome'
 import { addIgnoredFolders, normalizeIgnoredFolders } from './folderModel'
@@ -41,10 +39,8 @@ export class FolderController {
   private changeEpoch = 0
   private stale = false
   private watching = true
-  onHistory: (path: string | null) => Promise<void> = async () => {}
+  onHistory: (path: string) => Promise<void> = async () => {}
   onRegexRules: () => Promise<void> = async () => {}
-  /** Persists one Compare History entry; rejects when it could not be saved. */
-  onCompleted: (entry: NewCompareHistoryEntry) => Promise<void> = async () => {}
 
   constructor(
     host: HTMLElement,
@@ -142,11 +138,10 @@ export class FolderController {
       this.view.message(this.watching ? 'Folder watching enabled — press Refresh' : 'Folder watching disabled')
     }
     else if (command === 'history') {
-      // One selected regular file opens its saved versions; anything else opens the whole history.
-      const selected = this.view.selectedEntries()
-      const entry = selected.length === 1 ? selected[0] : undefined
+      const entry = this.view.selectedEntries()[0]
       const info = entry?.[this.view.activeSide] ?? entry?.left ?? entry?.right
-      await this.onHistory(info?.kind === 'file' ? info.path : null)
+      if (!info || info.kind !== 'file') throw new Error('Select a regular file to view History')
+      await this.onHistory(info.path)
     }
     else if (command === 'copy')
       commandMenu('Copy direction', [
@@ -271,7 +266,6 @@ export class FolderController {
         `Compared ${result.entries.length.toLocaleString()} items in ${((performance.now() - start) / 1000).toFixed(2)} s`,
       )
       this.changed()
-      this.recordCompleted(result)
       for (const side of ['left', 'right'] as const)
         void this.service
           .diskSpace(this.roots[side])
@@ -298,23 +292,6 @@ export class FolderController {
         this.view.setBusy(false)
       }
     }
-  }
-  /** Exactly one history entry per finished run, however many files it covered; a save failure never hides the result. */
-  private recordCompleted(result: FolderComparison): void {
-    const s = result.summary
-    void this.onCompleted({
-      kind: 'folder',
-      leftPath: result.leftPath,
-      rightPath: result.rightPath,
-      result: {
-        files: s.files, directories: s.directories, identical: s.identical, minor: s.minor, different: s.different,
-        leftOnly: s.leftOnly, rightOnly: s.rightOnly, errors: s.errors, skipped: s.skipped,
-      },
-    }).catch((e) => {
-      const text = describeHistoryError(e)
-      this.view.message(text)
-      this.view.log(text)
-    })
   }
   private rulesDialog(): void {
     const d = showDialog('Comparison rules'),

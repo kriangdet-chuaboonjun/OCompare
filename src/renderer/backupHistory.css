@@ -1,4 +1,4 @@
-.backup-history { width: min(980px, 94vw); }
+.backup-history { width: min(760px, 92vw); }
 .backup-history-path { overflow-wrap: anywhere; font-weight: 600; margin-top: 0; }
 .backup-history-list { overflow: auto; max-height: 42vh; border: 1px solid var(--dialog-input-border); }
 .backup-history-list > p { margin: 16px; }
@@ -10,7 +10,3 @@
 .backup-history input { accent-color: var(--focus); }
 .backup-history-message { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1em; margin-bottom: 0; }
 .backup-history button:disabled { opacity: .55; cursor: default; }
-.backup-history-note { overflow-wrap: anywhere; margin-top: 0; }
-.history-controls { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-.history-controls input[type=search] { flex: 1 1 220px; min-width: 0; }
-.backup-history td.history-path { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }

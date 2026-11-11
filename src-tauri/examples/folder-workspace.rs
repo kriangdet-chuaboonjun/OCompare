@@ -47,6 +47,10 @@ fn main() {
         });
     }
 }
+/// Recovery data sits next to the isolated sessions file, so each fixture root has its own.
+fn drafts_path(sessions: &Path) -> PathBuf {
+    sessions.with_file_name("tab-drafts.json")
+}
 fn string<'a>(v: &'a Value, key: &str) -> Result<&'a str, AppError> {
     v[key]
         .as_str()
@@ -149,28 +153,16 @@ fn run(
             folder_sessions::save(sessions, &v["store"])?;
             Ok(Value::Null)
         }
-        "listCompareHistory" => Ok(json!(o_compare_rust::compare_history::load(
-            &sessions.with_extension("compare-history.json")
-        )?)),
-        "appendCompareHistory" => {
-            let entry: o_compare_rust::compare_history::HistoryEntry =
-                serde_json::from_value(v["entry"].clone())
-                    .map_err(|e| AppError::new("HISTORY_FORMAT", e, None))?;
-            o_compare_rust::compare_history::append_with_texts(
-                &sessions.with_extension("compare-history.json"),
-                entry,
-                v["leftText"].as_str(),
-                v["rightText"].as_str(),
-            )?;
+        "loadTabDrafts" => o_compare_rust::tab_drafts::load(&drafts_path(sessions)),
+        "saveTabDrafts" => {
+            o_compare_rust::tab_drafts::save(&drafts_path(sessions), &v["store"])?;
             Ok(Value::Null)
         }
-        "readCompareSnapshot" => Ok(json!(o_compare_rust::compare_history::read_snapshot(
-            &sessions.with_extension("compare-history.json"),
-            string(v, "entryId")?,
-            string(v, "side")?
-        )?)),
-        "listAllHistory" => writes.with_store(|store| Ok(json!(store.list_all()?))),
-        "diskSpace" => Ok(json!(o_compare_rust::folder_copy::disk_space(Path::new(
+        "clearTabDrafts" => {
+            o_compare_rust::tab_drafts::clear(&drafts_path(sessions))?;
+            Ok(Value::Null)
+        }
+        "diskSpace" =>Ok(json!(o_compare_rust::folder_copy::disk_space(Path::new(
             string(v, "path")?
         ))?)),
         "pathKinds" => Ok(json!(o_compare_rust::folder_copy::path_kinds(
