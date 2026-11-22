@@ -109,6 +109,9 @@ export class FolderView {
       <div class="folder-summary" aria-live="polite">No comparison yet</div><div class="folder-bottom"><span data-selection>0 selected</span><span data-space="left">Left free: —</span><span data-elapsed></span><span data-space="right">Right free: —</span></div>`
     const toolbar = host.querySelector('.folder-toolbar')!
     this.toolbar = toolbar as HTMLElement
+    host.querySelectorAll<HTMLButtonElement>('[data-pick], [data-up]').forEach(button => {
+      button.replaceChildren(toolbarIcon(button.hasAttribute('data-up') ? 'parent' : 'open'))
+    })
     document.getElementById('folder-tools')!.append(toolbar)
     for (const [cmd, label] of commands) {
       const b = actionButton(label, () => this.dispatch(cmd))

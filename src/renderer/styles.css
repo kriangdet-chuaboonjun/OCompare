@@ -549,7 +549,7 @@ body { font: 13px/20px 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-ser
   #file-tools button[data-cmd="rules"], #file-tools button[data-cmd="structural"], #file-tools button[data-cmd="history"] { width: 36px; padding: 0; justify-content: center; }
 }
 #file-tools button[data-cmd="rules"] { margin-left: auto; }
-#toolbar .toolbar-icon { width: 18px; height: 18px; flex-basis: 18px; stroke-width: 1.6; }
+#toolbar .toolbar-icon { width: 18px; height: 18px; flex-basis: 18px; stroke-width: 2; }
 #toolbar button.active .toolbar-icon, #toolbar button[aria-pressed=true] .toolbar-icon { color: var(--mode-text); }
 button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
@@ -565,7 +565,7 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 .pathbar button, #folder-panel .folder-pathbar button { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 22px; padding: 1px; border: 1px solid var(--border); border-radius: 0; background: var(--surface); color: var(--text); font: 12px 'Segoe UI', sans-serif; }
 .pathbar .open { line-height: 1; }
 .pathbar button:hover:not(:disabled) { background: var(--hover); }
-.pb-icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pb-icon, .pathbar .toolbar-icon, .folder-pathbar .toolbar-icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .infobar { gap: 6px; padding: 6px 0 0; font-size: 12px; line-height: 16px; }
 .infobar .enc, .infobar .eol { padding: 1px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; font-weight: 600; }
 .infobar .enc:empty, .infobar .eol:empty { display: none; }
@@ -590,3 +590,15 @@ button:focus-visible, input:focus-visible, .folder-scroll:focus-visible { outlin
 
 .diff-counter { min-width: 44px; text-align: center; font: 12px/16px 'Cascadia Code', Consolas, monospace; color: var(--muted); white-space: nowrap; }
 .folder-pathbar.drop-target input { outline: 2px dashed var(--accent); outline-offset: -2px; }
+/* Soft Rounded toolbar: teal accents stay local to command chrome. */
+:root { --toolbar-accent: #087f70; --toolbar-selected: #dcf3ed; --toolbar-selected-border: #a7d9cd; }
+:root[data-theme="dark"] { --toolbar-accent: #66d6bf; --toolbar-selected: #193e36; --toolbar-selected-border: #377867; }
+#toolbar { --mode-text: var(--toolbar-accent); --mode-bg: var(--toolbar-selected); --mode-border: var(--toolbar-selected-border); }
+.toolbar-icon .icon-accent { stroke: var(--toolbar-accent); }
+#toolbar .toolbar-icon, .context-icon .toolbar-icon { stroke-width: 2; }
+#toolbar button { border-radius: 7px; }
+#toolbar button.active, #toolbar button.toggle[aria-pressed=true], #toolbar .seg button.active,
+#toolbar #folder-tools .folder-toolbar button[aria-pressed=true] { background: var(--toolbar-selected); color: var(--toolbar-accent); }
+#toolbar .mode-button.active { background: var(--toolbar-selected); box-shadow: 0 0 0 1px var(--toolbar-selected-border); }
+#toolbar #folder-tools .folder-toolbar button { border-radius: 7px; }
+.context-item[aria-disabled=true] .icon-accent, button:disabled .toolbar-icon .icon-accent { stroke: currentColor; }
