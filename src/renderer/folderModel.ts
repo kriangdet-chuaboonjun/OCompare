@@ -37,21 +37,38 @@ function glob(pattern: string): RegExp {
   return new RegExp(`^${result}$`, 'i')
 }
 
+/** Compiles each mask once; the returned test is applied to every entry of a result. */
+function compileMasks(patterns: string): (path: string, name: string) => boolean {
+  const masks = patterns
+    .split(';')
+    .map((p) => p.trim().replaceAll('\\', '/'))
+    .filter(Boolean)
+    .map((p) => {
+      if (p === '*.*') p = '*'
+      return { byPath: p.includes('/'), mask: glob(p), parent: p.endsWith('/**') ? glob(p.slice(0, -3)) : null }
+    })
+  return (path, name) =>
+    masks.some(({ byPath, mask, parent }) => mask.test(byPath ? path : name) || (parent !== null && parent.test(path)))
+}
+
+/** Windows-style masks are view filters, never filesystem paths. Build once, test many paths. */
+export function nameMatcher(include: string, exclude: string): (path: string) => boolean {
+  const included = include.trim() ? compileMasks(include) : null
+  const excluded = compileMasks(exclude)
+  return (path) => {
+    const name = path.slice(path.lastIndexOf('/') + 1)
+    return (included === null || included(path, name)) && !excluded(path, name)
+  }
+}
+
 /** Windows-style masks are view filters, never filesystem paths. */
 export function matchesName(path: string, include: string, exclude: string): boolean {
-  const name = path.slice(path.lastIndexOf('/') + 1)
-  const matches = (patterns: string) =>
-    patterns
-      .split(';')
-      .map((p) => p.trim().replaceAll('\\', '/'))
-      .filter(Boolean)
-      .some((p) => {
-        if (p === '*.*') p = '*'
-        const value = p.includes('/') ? path : name
-        return glob(p).test(value) || (p.endsWith('/**') && glob(p.slice(0, -3)).test(path))
-      })
-  return (!include.trim() || matches(include)) && !matches(exclude)
+  return nameMatcher(include, exclude)(path)
 }
+
+// Same results as localeCompare with these options, without building a collator per comparison.
+const naturalOrder = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+const defaultOrder = new Intl.Collator()
 
 export interface ProjectedRow {
   entry: FolderEntry
@@ -63,11 +80,12 @@ export function projectRows(
   options: FolderViewOptions,
   collapsed: Set<string>,
 ): ProjectedRow[] {
+  const matches = nameMatcher(options.include, options.exclude)
   const direct = new Set(
     entries
       .filter(
         (e) =>
-          matchesName(e.relativePath, options.include, options.exclude) &&
+          matches(e.relativePath) &&
           options.statuses.includes(e.status) &&
           (options.showMinor || e.status !== 'minor'),
       )
@@ -86,10 +104,10 @@ export function projectRows(
       bv = b[options.sortSide]
     const value =
       options.sort === 'name'
-        ? a.relativePath.localeCompare(b.relativePath, undefined, { numeric: true, sensitivity: 'base' })
+        ? naturalOrder.compare(a.relativePath, b.relativePath)
         : (options.sort === 'size'
             ? (av?.size ?? -1) - (bv?.size ?? -1)
-            : (av?.mtimeMs ?? -1) - (bv?.mtimeMs ?? -1)) || a.relativePath.localeCompare(b.relativePath)
+            : (av?.mtimeMs ?? -1) - (bv?.mtimeMs ?? -1)) || defaultOrder.compare(a.relativePath, b.relativePath)
     return options.descending ? -value : value
   }
   if (options.structure === 'flat')

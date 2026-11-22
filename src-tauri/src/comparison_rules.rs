@@ -80,6 +80,31 @@ impl CompiledRules {
         Ok(Self(compiled))
     }
 
+    /// The `text` of `normalize` without the column maps, for callers that only compare text
+    /// (folder Minor checks). The maps cost two `u32` per character, so skipping them matters.
+    pub fn normalize_text(&self, text: &str) -> String {
+        if self.0.is_empty() {
+            // Lines and separators cover the whole input, so nothing removed means unchanged.
+            return text.to_owned();
+        }
+        let mut output = String::with_capacity(text.len());
+        for (line, separator) in original_lines(text) {
+            let mut ignored = vec![false; line.len()];
+            for regex in &self.0 {
+                for found in regex.find_iter(line) {
+                    ignored[found.start()..found.end()].fill(true);
+                }
+            }
+            output.extend(
+                line.char_indices()
+                    .filter(|(offset, _)| !ignored[*offset])
+                    .map(|(_, character)| character),
+            );
+            output.push_str(separator);
+        }
+        output
+    }
+
     /// Match each original line independently; overlapping rules form a union.
     pub fn normalize(&self, text: &str) -> NormalizedText {
         let mut output = String::with_capacity(text.len());

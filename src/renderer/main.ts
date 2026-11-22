@@ -123,9 +123,15 @@ function renderTabs(): void {
   const add = document.createElement('button'); add.id = 'tab-add'; add.type = 'button'; add.textContent = '+'; add.title = 'New comparison (Ctrl+T)'; add.setAttribute('aria-label', 'New comparison'); add.addEventListener('click', () => tabs.create()); tabStrip.append(add)
 }
 let regexSignature = ''
+let regexTab = ''
 tabs.onChange(() => {
-  const signature = JSON.stringify([tabs.active.id, tabs.active.regexRules])
-  if (signature !== regexSignature) { regexSignature = signature; regexAdapter.setRules(tabs.active.regexRules) }
+  // Restarting the worker is needed only for new rules, or to drop a job of the tab left behind;
+  // switching between idle tabs with the same rules keeps the warm worker.
+  const signature = JSON.stringify(tabs.active.regexRules)
+  if (signature !== regexSignature || (tabs.active.id !== regexTab && regexAdapter.busy)) {
+    regexSignature = signature; regexAdapter.setRules(tabs.active.regexRules)
+  }
+  regexTab = tabs.active.id
   refreshToggles(); renderTabs(); renderHeaders(); renderStatus(); window.dispatchEvent(new Event('tabs:changed'))
 })
 tabs.onRelease = doc => { run(() => api.watchFile(doc.id, null)) }

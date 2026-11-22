@@ -7,7 +7,24 @@ import type {
 } from '../shared/folders'
 import type { Side } from '../shared/types'
 import { createFileIcon } from './fileIcon'
-import { allStatuses, defaultViewOptions, matchesName, projectRows, type ProjectedRow } from './folderModel'
+import { allStatuses, defaultViewOptions, nameMatcher, projectRows, type ProjectedRow } from './folderModel'
+
+/** A selection that counts its changes, so totals derived from it are recomputed only when it changes. */
+class SelectionSet extends Set<string> {
+  version = 0
+  override add(value: string): this {
+    this.version++
+    return super.add(value)
+  }
+  override delete(value: string): boolean {
+    this.version++
+    return super.delete(value)
+  }
+  override clear(): void {
+    this.version++
+    super.clear()
+  }
+}
 import { actionButton, commandMenu, showDialog, toolbarIcon } from './folderChrome'
 import { showContextMenu, type MenuEntry } from './contextMenu'
 
@@ -75,7 +92,9 @@ export class FolderView {
   private result: FolderComparison | null = null
   private rows: ProjectedRow[] = []
   private collapsed = new Set<string>()
-  private selected = new Set<string>()
+  private selected = new SelectionSet()
+  /** Byte totals of the selection; walking every entry on each scroll frame is too slow. */
+  private totals: { result: FolderComparison | null; selected: SelectionSet; version: number; left: number; right: number } | null = null
   private focused = ''
   private anchor = ''
   private scroll: HTMLElement
@@ -428,7 +447,7 @@ export class FolderView {
             [
               statusLabels[s],
               () => {
-                this.selected = new Set(
+                this.selected = new SelectionSet(
                   this.rows.filter((r) => r.entry.status === s).map((r) => r.entry.relativePath),
                 )
                 this.draw()
@@ -534,7 +553,7 @@ export class FolderView {
     this.updateRows()
   }
   private selectAll(): void {
-    this.selected = new Set(this.rows.map((r) => r.entry.relativePath))
+    this.selected = new SelectionSet(this.rows.map((r) => r.entry.relativePath))
     this.draw()
   }
   selectedEntries(): FolderEntry[] {
@@ -542,6 +561,7 @@ export class FolderView {
   }
   copyPaths(): string[] {
     const selected = new Set(this.selectedEntries().map((e) => e.relativePath))
+    const matches = nameMatcher(this.options.include, this.options.exclude)
     return (this.result?.entries ?? [])
       .filter((e) => {
         let path = e.relativePath,
@@ -550,7 +570,7 @@ export class FolderView {
           path = path.slice(0, path.lastIndexOf('/'))
           chosen = selected.has(path)
         }
-        return chosen && matchesName(e.relativePath, this.options.include, this.options.exclude)
+        return chosen && matches(e.relativePath)
       })
       .map((e) => e.relativePath)
   }
@@ -593,7 +613,7 @@ export class FolderView {
     const buttons = [...this.host.querySelectorAll<HTMLButtonElement>('[data-folder-cmd]'), ...this.toolbar.querySelectorAll<HTMLButtonElement>('[data-folder-cmd]')]
     buttons.forEach((b) => {
       const c = b.dataset.folderCmd!
-      b.disabled =
+      const disabled =
         c === 'cancel'
           ? !this.busy
           : c === 'copy'
@@ -601,13 +621,17 @@ export class FolderView {
             : c === 'files' || c === 'history'
               ? this.busy || this.selected.size !== 1
               : this.busy && c !== 'log'
-      b.title = b.disabled
+      const title = disabled
         ? c === 'copy'
           ? 'Compare current roots and select items before copying'
           : c === 'files'
             ? 'Select one file pair'
             : 'Unavailable while a job is running'
         : (b.getAttribute('aria-label') ?? c)
+      // Write only real changes: every write wakes the toolbar-overflow observer, which
+      // re-measures the toolbar and closes an open "More" menu.
+      if (b.disabled !== disabled) b.disabled = disabled
+      if (b.title !== title) b.title = title
     })
   }
   message(text: string): void {
@@ -640,7 +664,7 @@ export class FolderView {
       this.selected.clear()
     } else {
       const paths = new Set(result.entries.map((e) => e.relativePath))
-      this.selected = new Set([...this.selected].filter((p) => paths.has(p)))
+      this.selected = new SelectionSet([...this.selected].filter((p) => paths.has(p)))
     }
     const s = result.summary
     this.host.querySelector('.folder-summary')!.textContent =
@@ -651,7 +675,7 @@ export class FolderView {
     this.rows = projectRows(this.result?.entries ?? [], this.options, this.collapsed)
     if (filterChanged) {
       const visible = new Set(this.rows.map((r) => r.entry.relativePath))
-      this.selected = new Set([...this.selected].filter((p) => visible.has(p)))
+      this.selected = new SelectionSet([...this.selected].filter((p) => visible.has(p)))
       this.actions.viewChanged()
     }
     if (!this.rows.some((r) => r.entry.relativePath === this.focused))
@@ -724,22 +748,32 @@ export class FolderView {
     if (index >= start && index < end)
       this.scroll.setAttribute('aria-activedescendant', `folder-row-${index}`)
     else this.scroll.removeAttribute('aria-activedescendant')
-    let left = 0,
-      right = 0
-    for (const e of this.result?.entries ?? []) {
-      let path = e.relativePath,
-        chosen = this.selected.has(path)
-      while (!chosen && path.includes('/')) {
-        path = path.slice(0, path.lastIndexOf('/'))
-        chosen = this.selected.has(path)
-      }
-      if (!chosen) continue
-      if (e.left?.kind === 'file') left += e.left.size
-      if (e.right?.kind === 'file') right += e.right.size
-    }
+    const { left, right } = this.selectionTotals()
     this.host.querySelector('[data-selection]')!.textContent =
       `${this.result?.entries.length ?? 0} total · ${this.rows.length} shown · ${this.selected.size} selected · Left ${left.toLocaleString()} B / Right ${right.toLocaleString()} B`
     this.buttons()
+  }
+  /** File bytes under the selection (a selected folder counts its whole subtree). */
+  private selectionTotals(): { left: number; right: number } {
+    const cached = this.totals
+    if (cached && cached.result === this.result && cached.selected === this.selected && cached.version === this.selected.version)
+      return cached
+    let left = 0,
+      right = 0
+    if (this.selected.size)
+      for (const e of this.result?.entries ?? []) {
+        let path = e.relativePath,
+          chosen = this.selected.has(path)
+        while (!chosen && path.includes('/')) {
+          path = path.slice(0, path.lastIndexOf('/'))
+          chosen = this.selected.has(path)
+        }
+        if (!chosen) continue
+        if (e.left?.kind === 'file') left += e.left.size
+        if (e.right?.kind === 'file') right += e.right.size
+      }
+    this.totals = { result: this.result, selected: this.selected, version: this.selected.version, left, right }
+    return this.totals
   }
   private sideCell(entry: FolderEntry, info: EntryMetadata | null, side: Side): HTMLElement {
     const cell = document.createElement('div')

@@ -61,3 +61,20 @@ fn oversized_input_explicitly_falls_back_to_original_text() {
     assert!(result.reason.is_some());
     assert_eq!(result.left.text, large);
 }
+
+#[test]
+fn text_only_normalization_matches_the_mapped_text() {
+    let samples = [
+        "",
+        "abcdef\r\nabc\n",
+        "ไทย😀123X\rnext 42\n\nlast",
+        "no newline at end 7",
+    ];
+    let rule_sets = [vec![], vec![rule("[0-9]+")], vec![rule("abc"), rule("cde"), rule(r"\s+$")]];
+    for rules in rule_sets {
+        let compiled = CompiledRules::compile(&rules).unwrap();
+        for text in samples {
+            assert_eq!(compiled.normalize_text(text), compiled.normalize(text).text, "{text:?}");
+        }
+    }
+}

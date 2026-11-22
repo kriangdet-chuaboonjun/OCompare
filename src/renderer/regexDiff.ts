@@ -30,6 +30,11 @@ export class RegexDiffAdapter {
     return { dispose: () => { this.listeners.delete(listener) } }
   }
 
+  /** A diff job is queued or running in the worker. */
+  get busy(): boolean {
+    return this.pending.size > 0
+  }
+
   setRules(rules: RegexRule[]): void {
     this.rules = rules.map(rule => ({ ...rule }))
     this.generation++

@@ -46,7 +46,10 @@ impl WriteService {
     }
     pub fn save(&self, path: &Path, bytes: &[u8]) -> Result<FileStat, AppError> {
         self.with_store(|store| {
-            if std::fs::read(path).is_ok_and(|old| old == bytes) {
+            // Size first: a file of another length cannot be equal, so it is not read in full.
+            if std::fs::metadata(path).is_ok_and(|meta| meta.len() == bytes.len() as u64)
+                && std::fs::read(path).is_ok_and(|old| old == bytes)
+            {
                 return file_stat(path);
             }
             let prepared = store.prepare(path, "Save")?;

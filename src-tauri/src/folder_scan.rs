@@ -228,7 +228,7 @@ fn minor_equal(
         {
             return Err("Binary file; Minor not checked".into());
         }
-        let text = regex.normalize(&text).text;
+        let text = regex.normalize_text(&text);
         let text = if options.ignore_eol {
             text.replace("\r\n", "\n")
         } else {
