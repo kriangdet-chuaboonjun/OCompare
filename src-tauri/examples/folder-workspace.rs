@@ -125,12 +125,17 @@ fn run(
         }
         "watchFolders" => {
             let events = events.clone();
-            let generation = watch.watch(
+            let ignored: Vec<String> = serde_json::from_value(
+                v.get("ignoredFolders").cloned().unwrap_or_else(|| json!([])),
+            )
+            .map_err(|e| AppError::new("TEST_INPUT", e, None))?;
+            let generation = watch.watch_ignoring(
                 string(v, "tabId")?,
                 vec![
                     string(v, "leftPath")?.into(),
                     string(v, "rightPath")?.into(),
                 ],
+                &ignored,
                 Arc::new(move |event| {
                     if let Ok(mut queue) = events.lock() {
                         queue.push(event);

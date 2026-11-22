@@ -172,3 +172,199 @@ pub fn clear(path: &Path) -> Result<(), AppError> {
         Err(e) => Err(AppError::new("DRAFTS_WRITE", e, Some(path))),
     }
 }
+
+/// Per-window recovery files in one directory. Each window owns `<id>.json`, written when it
+/// closes, and holds an exclusive OS lock on `<id>.lock` for as long as it runs. On start a
+/// window takes over only the files whose owner has exited (its lock is free), so windows never
+/// delete, overwrite or both restore each other's drafts. A crash releases the lock, so a file
+/// claimed by a window that then crashed is claimed again by the next start.
+pub struct DraftSlots {
+    dir: PathBuf,
+    legacy: Option<PathBuf>,
+    id: String,
+    _lock: fs::File,
+    claimed: std::sync::Mutex<Vec<PathBuf>>,
+}
+
+fn owner_of(path: &Path) -> Option<String> {
+    let name = path.file_name()?.to_str()?;
+    if !name.ends_with(".json") {
+        return None;
+    }
+    name.split('.').next().filter(|s| !s.is_empty()).map(str::to_owned)
+}
+
+/// Appends `value` to `merged`, renaming document ids so stores from several windows never clash.
+fn append(merged: &mut Value, value: &Value, file: usize) {
+    let mut ids = std::collections::HashMap::new();
+    if let Some(documents) = merged["documents"].as_array_mut() {
+        for (index, doc) in value["documents"].as_array().into_iter().flatten().enumerate() {
+            let id = format!("r{file}.{index}");
+            ids.insert(doc["id"].as_str().unwrap_or_default().to_owned(), id.clone());
+            let mut doc = doc.clone();
+            doc["id"] = json!(id);
+            documents.push(doc);
+        }
+    }
+    let mut offset = 0;
+    if let Some(tabs) = merged["tabs"].as_array_mut() {
+        offset = tabs.len();
+        for tab in value["tabs"].as_array().into_iter().flatten() {
+            let mut tab = tab.clone();
+            for key in ["left", "right"] {
+                tab[key] = json!(ids.get(tab[key].as_str().unwrap_or_default()));
+            }
+            tabs.push(tab);
+        }
+    }
+    if merged["active"].is_null() {
+        if let Some(active) = value["active"].as_u64() {
+            merged["active"] = json!(offset as u64 + active);
+        }
+    }
+    if value["savedAtMs"].as_f64() > merged["savedAtMs"].as_f64() {
+        merged["savedAtMs"] = value["savedAtMs"].clone();
+    }
+}
+
+fn fits(merged: &Value, value: &Value) -> bool {
+    let count = |v: &Value, key: &str| v[key].as_array().map_or(0, Vec::len);
+    count(merged, "documents") + count(value, "documents") <= MAX_DOCUMENTS
+        && count(merged, "tabs") + count(value, "tabs") <= MAX_TABS
+}
+
+impl DraftSlots {
+    /// `legacy` is the single shared file used by older versions; it is claimed like any other.
+    pub fn open(dir: PathBuf, legacy: Option<PathBuf>) -> Result<Self, AppError> {
+        fs::create_dir_all(&dir).map_err(|e| AppError::new("DRAFTS_WRITE", e, Some(&dir)))?;
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or_default();
+        let id = format!("w{}-{stamp}", std::process::id());
+        let lock_path = dir.join(format!("{id}.lock"));
+        let lock = fs::OpenOptions::new()
+            .create(true)
+            .truncate(false)
+            .write(true)
+            .open(&lock_path)
+            .map_err(|e| AppError::new("DRAFTS_LOCK", e, Some(&lock_path)))?;
+        lock.try_lock()
+            .map_err(|e| AppError::new("DRAFTS_LOCK", e, Some(&lock_path)))?;
+        Ok(Self {
+            dir,
+            legacy,
+            id,
+            _lock: lock,
+            claimed: Default::default(),
+        })
+    }
+
+    fn own_path(&self) -> PathBuf {
+        self.dir.join(format!("{}.json", self.id))
+    }
+
+    /// An owner is gone when nobody holds its lock. Unknown states count as alive: never steal.
+    fn owner_gone(&self, owner: &str) -> bool {
+        if owner == self.id {
+            return false;
+        }
+        let lock_path = self.dir.join(format!("{owner}.lock"));
+        let file = match fs::OpenOptions::new().write(true).open(&lock_path) {
+            Ok(file) => file,
+            Err(e) => return e.kind() == std::io::ErrorKind::NotFound,
+        };
+        if file.try_lock().is_err() {
+            return false;
+        }
+        drop(file);
+        let _ = fs::remove_file(&lock_path);
+        true
+    }
+
+    /// Takes over every store left by windows that have exited and returns them as one store.
+    pub fn load(&self) -> Result<Value, AppError> {
+        let claim_path = self.dir.join("claim.lock");
+        let claim = fs::OpenOptions::new()
+            .create(true)
+            .truncate(false)
+            .write(true)
+            .open(&claim_path)
+            .map_err(|e| AppError::new("DRAFTS_LOCK", e, Some(&claim_path)))?;
+        claim
+            .lock()
+            .map_err(|e| AppError::new("DRAFTS_LOCK", e, Some(&claim_path)))?;
+        let mut candidates: Vec<PathBuf> =
+            self.legacy.iter().filter(|p| p.exists()).cloned().collect();
+        let entries = fs::read_dir(&self.dir)
+            .map_err(|e| AppError::new("DRAFTS_READ", e, Some(&self.dir)))?;
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if owner_of(&path).is_some_and(|owner| self.owner_gone(&owner)) {
+                candidates.push(path);
+            } else if let Some(owner) = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .and_then(|n| n.strip_suffix(".lock"))
+                .filter(|owner| *owner != "claim")
+            {
+                // Windows that closed with nothing to recover leave only their lock behind.
+                self.owner_gone(owner);
+            }
+        }
+        candidates.sort_by_key(|p| fs::metadata(p).and_then(|m| m.modified()).ok());
+        let mut claimed = self
+            .claimed
+            .lock()
+            .map_err(|e| AppError::new("DRAFTS_STATE", e, None))?;
+        let mut merged = empty();
+        let mut failure = None;
+        for path in candidates {
+            match load(&path) {
+                Ok(value) if fits(&merged, &value) => {
+                    let target = self
+                        .dir
+                        .join(format!("{}.claimed-{}.json", self.id, claimed.len()));
+                    if fs::rename(&path, &target).is_ok() {
+                        append(&mut merged, &value, claimed.len());
+                        claimed.push(target);
+                    }
+                }
+                // More than one window can show: left for the next start.
+                Ok(_) => {}
+                Err(error) => {
+                    let _ = fs::rename(&path, corrupt_name(&path));
+                    failure.get_or_insert(error);
+                }
+            }
+        }
+        match failure {
+            Some(error) if merged["tabs"].as_array().is_none_or(Vec::is_empty) => Err(error),
+            _ => Ok(merged),
+        }
+    }
+
+    /// Stores this window's drafts; the stores it took over are now part of them.
+    pub fn save(&self, value: &Value) -> Result<(), AppError> {
+        save(&self.own_path(), value)?;
+        self.forget_claimed()
+    }
+
+    /// Forgets this window's drafts and the stores it took over; other windows are untouched.
+    pub fn clear(&self) -> Result<(), AppError> {
+        clear(&self.own_path())?;
+        self.forget_claimed()
+    }
+
+    fn forget_claimed(&self) -> Result<(), AppError> {
+        let mut claimed = self
+            .claimed
+            .lock()
+            .map_err(|e| AppError::new("DRAFTS_STATE", e, None))?;
+        for path in claimed.iter() {
+            clear(path)?;
+        }
+        claimed.clear();
+        Ok(())
+    }
+}

@@ -18,6 +18,10 @@ export interface FolderGuard {
   copyBlocked(self: FolderController): string | null
 }
 
+function errorText(e: unknown): string {
+  return typeof e === 'object' && e !== null && 'message' in e ? String(e.message) : String(e)
+}
+
 /** Coordinates native jobs; only the current request can replace visible results. */
 export class FolderController {
   readonly view: FolderView
@@ -38,6 +42,7 @@ export class FolderController {
   private watchQueue: Promise<void> = Promise.resolve()
   private changeEpoch = 0
   private stale = false
+  private copyNowButton: HTMLButtonElement | null = null
   private watching = true
   onHistory: (path: string) => Promise<void> = async () => {}
   onRegexRules: () => Promise<void> = async () => {}
@@ -101,7 +106,7 @@ export class FolderController {
     }
   }
   private error(e: unknown): void {
-    const text = typeof e === 'object' && e !== null && 'message' in e ? String(e.message) : String(e)
+    const text = errorText(e)
     this.view.message(text)
     this.view.log(`Error: ${text}`)
   }
@@ -163,9 +168,7 @@ export class FolderController {
     this.roots[side] = value
     this.view.setRoots(this.roots.left, this.roots.right)
     this.view.setCopyAllowed(false)
-    for (const button of document.querySelectorAll<HTMLButtonElement>('.folder-dialog button')) {
-      if (button.textContent === 'Copy now') { button.disabled = true; button.title = 'Folders changed — cancel this preview and press Refresh' }
-    }
+    this.disableCopyNow()
     this.view.setSpace(side, null)
     this.view.message(
       this.result
@@ -179,14 +182,20 @@ export class FolderController {
     this.changeEpoch++
     this.stale = true
     this.view.setCopyAllowed(false)
-    for (const button of document.querySelectorAll<HTMLButtonElement>('.folder-dialog button')) {
-      if (button.textContent === 'Copy now') { button.disabled = true; button.title = 'Folders changed — cancel this preview and press Refresh' }
-    }
+    this.disableCopyNow()
     this.view.log(message)
     if (this.phase !== 'copy' && this.phase !== 'scan') this.view.message(message)
   }
+  /** Only this tab's own copy preview: dialogs of every tab live in document.body. */
+  private disableCopyNow(): void {
+    const button = this.copyNowButton
+    if (!button) return
+    button.disabled = true
+    button.title = 'Folders changed — cancel this preview and press Refresh'
+  }
   private configureWatch(): Promise<void> {
-    const key = this.watching ? JSON.stringify(this.roots) : ''
+    const ignored = this.rules.ignoredFolders ?? []
+    const key = this.watching ? JSON.stringify([this.roots, ignored]) : ''
     if (key === this.watchRoots) return this.watchQueue
     this.watchRoots = key
     const request = ++this.watchRequest
@@ -195,7 +204,7 @@ export class FolderController {
       if (request !== this.watchRequest || this.disposed) return
       await this.service.stopWatching?.(this.tabId)
       if (!key || !this.roots.left || !this.roots.right) return
-      const generation = await this.service.watchFolders?.(this.tabId, this.roots.left, this.roots.right)
+      const generation = await this.service.watchFolders?.(this.tabId, this.roots.left, this.roots.right, ignored)
       if (request === this.watchRequest && !this.disposed) this.watchGeneration = generation ?? 0
     }).catch(e => { this.watchRoots = ''; this.markStale(`Folder watcher unavailable — press Refresh: ${String(e)}`) })
     return this.watchQueue
@@ -503,15 +512,18 @@ export class FolderController {
     d.body.append(table)
     return new Promise((resolve) => {
       let settled = false
+      const copyNow = actionButton('Copy now', () => finish(true))
       const finish = (accepted: boolean) => {
         if (settled) return
         settled = true
+        if (this.copyNowButton === copyNow) this.copyNowButton = null
         resolve(accepted)
         d.close()
       }
       d.dialog.addEventListener(
         'close',
         () => {
+          if (this.copyNowButton === copyNow) this.copyNowButton = null
           if (!settled) {
             settled = true
             resolve(false)
@@ -519,10 +531,9 @@ export class FolderController {
         },
         { once: true },
       )
-      d.footer.append(
-        actionButton('Cancel', () => finish(false)),
-        actionButton('Copy now', () => finish(true)),
-      )
+      this.copyNowButton = copyNow
+      if (this.stale) this.disableCopyNow()
+      d.footer.append(actionButton('Cancel', () => finish(false)), copyNow)
     })
   }
   private async copy(direction: Side): Promise<void> {
@@ -579,7 +590,9 @@ export class FolderController {
       await this.compare()
       this.view.message(this.stale ? `${text}. Folders changed — press Refresh` : text)
     } finally {
-      if (plan) await this.service.discardCopy(plan.planId)
+      // A failed discard must not leave the app-wide copy guard held forever.
+      if (plan)
+        await this.service.discardCopy(plan.planId).catch((e: unknown) => this.view.log(`Copy plan cleanup failed: ${errorText(e)}`))
       if (this.current === id) {
         this.current = null
         this.phase = null

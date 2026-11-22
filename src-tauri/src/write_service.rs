@@ -59,3 +59,11 @@ impl WriteService {
         })
     }
 }
+impl crate::backups::BackupAccess for WriteService {
+    fn transaction(
+        &self,
+        work: &mut dyn FnMut(&BackupStore) -> Result<(), AppError>,
+    ) -> Result<(), AppError> {
+        self.with_store(|store| work(store))
+    }
+}

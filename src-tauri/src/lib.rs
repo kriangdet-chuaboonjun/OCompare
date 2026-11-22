@@ -28,6 +28,7 @@ pub fn run() {
         })
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(std::sync::OnceLock::<std::sync::Arc<tab_drafts::DraftSlots>>::new())
         .manage(std::sync::Arc::new(watcher::WatchService::default()))
         .manage(std::sync::Arc::new(folders::FolderJobs::default()))
         .manage(std::sync::Arc::new(folder_copy::CopyService::default()))

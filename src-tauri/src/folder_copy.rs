@@ -338,6 +338,16 @@ impl CopyService {
                         .is_some_and(|(a, b)| a.hash == b.hash)
                 {
                     item.reason = Some("Identical bytes".into());
+                } else if b
+                    .as_ref()
+                    .is_some_and(|b| !b.directory && b.size > crate::backups::MAX_BYTES)
+                {
+                    // Overwrites are always backed up first; say so in the preview instead of
+                    // failing the file halfway through the copy.
+                    item.reason = Some(format!(
+                        "Destination is larger than the {} GB backup history limit; not replaced. Copy it outside OCompare if you no longer need the old version",
+                        crate::backups::MAX_BYTES / 1_000_000_000
+                    ));
                 }
                 if item.reason.is_none() {
                     item.action = if b.is_some() { "overwrite" } else { "create" }.into();
@@ -384,7 +394,7 @@ impl CopyService {
         id: &str,
         cancel: &AtomicBool,
         progress: &mut dyn FnMut(usize, usize, &str),
-        backups: &crate::backups::BackupStore,
+        backups: &dyn crate::backups::BackupAccess,
     ) -> Result<CopyReport, AppError> {
         self.execute_inner(id, cancel, progress, Some(backups))
     }
@@ -393,7 +403,7 @@ impl CopyService {
         id: &str,
         cancel: &AtomicBool,
         progress: &mut dyn FnMut(usize, usize, &str),
-        backups: Option<&crate::backups::BackupStore>,
+        backups: Option<&dyn crate::backups::BackupAccess>,
     ) -> Result<CopyReport, AppError> {
         let plan = {
             let mut slot = self
@@ -463,7 +473,7 @@ fn copy_one(
     plan: &StoredPlan,
     item: &CopyItem,
     cancel: &AtomicBool,
-    backups: Option<&crate::backups::BackupStore>,
+    backups: Option<&dyn crate::backups::BackupAccess>,
 ) -> Result<(), AppError> {
     let source = Path::new(&item.source);
     let destination = Path::new(&item.destination);
@@ -552,27 +562,49 @@ fn copy_one(
     }
     check(cancel)?;
     safe_path(&plan.destination_root, &item.relative_path)?;
-    if fingerprint(destination, cancel)? != *expected_destination {
-        return Err(stale());
-    }
-    let prepared = if item.action == "overwrite" {
-        backups
-            .map(|store| store.prepare(destination, "Copy"))
-            .transpose()?
-            .flatten()
-    } else {
-        None
+    let mut temp = Some(temp);
+    // Backup, replace and history commit form one transaction; only it holds the history lock.
+    let mut replace = |store: Option<&crate::backups::BackupStore>| -> Result<(), AppError> {
+        if fingerprint(destination, cancel)? != *expected_destination {
+            return Err(stale());
+        }
+        let prepared = if item.action == "overwrite" {
+            store
+                .map(|store| store.prepare(destination, "Copy"))
+                .transpose()?
+                .flatten()
+        } else {
+            None
+        };
+        if fingerprint(destination, cancel)? != *expected_destination {
+            return Err(stale());
+        }
+        check(cancel)?;
+        let temp = temp
+            .take()
+            .ok_or_else(|| err("COPY_STATE", "Copy already written", destination))?;
+        if expected_destination.is_none() {
+            // "create": a file that appeared since the last check must not be replaced unseen.
+            temp.persist_noclobber(destination).map_err(|e| {
+                if destination.exists() {
+                    stale()
+                } else {
+                    err("COPY_WRITE", e.error, destination)
+                }
+            })?;
+        } else {
+            temp.persist(destination)
+                .map_err(|e| err("COPY_WRITE", e.error, destination))?;
+        }
+        if let Some(prepared) = prepared {
+            prepared.commit()?;
+        }
+        Ok(())
     };
-    if fingerprint(destination, cancel)? != *expected_destination {
-        return Err(stale());
+    match backups {
+        Some(backups) => backups.transaction(&mut |store| replace(Some(store))),
+        None => replace(None),
     }
-    check(cancel)?;
-    temp.persist(destination)
-        .map_err(|e| err("COPY_WRITE", e.error, destination))?;
-    if let Some(prepared) = prepared {
-        prepared.commit()?;
-    }
-    Ok(())
 }
 
 /// "directory", "file" or "other" (missing, unreadable, special) for each path; links are followed.

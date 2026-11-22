@@ -57,7 +57,7 @@ export const api: OCompareApi = {
 }
 
 export const folderApi: FolderApi = {
-  watchFolders: (tabId, leftPath, rightPath) => command('watch_folders', { tabId, leftPath, rightPath }),
+  watchFolders: (tabId, leftPath, rightPath, ignoredFolders = []) => command('watch_folders', { tabId, leftPath, rightPath, ignoredFolders }),
   stopWatching: tabId => command('stop_folder_watch', { tabId }),
   onChanged: callback => listen('folder:changed', ({ payload }) => callback(payload as import('../shared/folders').FolderWatchEvent)),
   openDirectory: async () => {

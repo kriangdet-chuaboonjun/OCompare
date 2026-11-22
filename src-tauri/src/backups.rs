@@ -155,6 +155,25 @@ fn target_hash(path: &Path) -> Result<Option<String>, AppError> {
     }
 }
 
+/// Runs one history transaction with exclusive access to the store. A long job (folder Copy)
+/// takes it once per file, so Save in this or another window waits for one file, not the job.
+pub trait BackupAccess {
+    fn transaction(
+        &self,
+        work: &mut dyn FnMut(&BackupStore) -> Result<(), AppError>,
+    ) -> Result<(), AppError>;
+}
+
+/// Direct use: the caller already has exclusive access (tests, single-threaded tools).
+impl BackupAccess for BackupStore {
+    fn transaction(
+        &self,
+        work: &mut dyn FnMut(&BackupStore) -> Result<(), AppError>,
+    ) -> Result<(), AppError> {
+        work(self)
+    }
+}
+
 impl BackupStore {
     pub fn new(root: PathBuf) -> Self {
         Self::with_limits(root, MAX_VERSIONS, MAX_BYTES)
@@ -446,32 +465,41 @@ impl BackupStore {
         let mut entries = self.entries()?;
         let mut counts = std::collections::HashMap::<String, usize>::new();
         let mut total: u64 = entries.iter().map(|e| e.size).sum();
-        for entry in &entries {
-            let key = if cfg!(windows) {
+        let key_of = |entry: &BackupEntry| {
+            if cfg!(windows) {
                 entry.path.to_ascii_lowercase()
             } else {
                 entry.path.clone()
-            };
-            *counts.entry(key).or_default() += 1;
-        }
-        for entry in entries.drain(..) {
-            let key = if cfg!(windows) {
-                entry.path.to_ascii_lowercase()
-            } else {
-                entry.path.clone()
-            };
-            if entry.id == keep_id || (counts[&key] <= self.max_versions && total <= self.max_bytes)
-            {
-                continue;
             }
-            // Remove the catalog record first. An interrupted cleanup leaves an orphan,
-            // never a history row pointing at deleted bytes.
-            fs::remove_file(self.location(&entry.id, "json"))
-                .map_err(|e| error("BACKUP_PRUNE", e, &self.root))?;
-            fs::remove_file(self.location(&entry.id, "bin"))
-                .map_err(|e| error("BACKUP_PRUNE", e, &self.root))?;
-            total -= entry.size;
-            *counts.get_mut(&key).unwrap() -= 1;
+        };
+        for entry in &entries {
+            *counts.entry(key_of(entry)).or_default() += 1;
+        }
+        // Oldest first. When the byte quota is exceeded, Copy snapshots are removed before any
+        // other kind, so one large folder copy cannot push every earlier Save out of history.
+        for copies_only in [true, false] {
+            let mut kept = Vec::with_capacity(entries.len());
+            for entry in entries.drain(..) {
+                let key = key_of(&entry);
+                let over_count = counts[&key] > self.max_versions;
+                let over_bytes =
+                    total > self.max_bytes && (!copies_only || entry.reason == "Copy");
+                if entry.id == keep_id || !(over_count || over_bytes) {
+                    kept.push(entry);
+                    continue;
+                }
+                // Remove the catalog record first. An interrupted cleanup leaves an orphan,
+                // never a history row pointing at deleted bytes.
+                fs::remove_file(self.location(&entry.id, "json"))
+                    .map_err(|e| error("BACKUP_PRUNE", e, &self.root))?;
+                fs::remove_file(self.location(&entry.id, "bin"))
+                    .map_err(|e| error("BACKUP_PRUNE", e, &self.root))?;
+                total -= entry.size;
+                if let Some(count) = counts.get_mut(&key) {
+                    *count -= 1;
+                }
+            }
+            entries = kept;
         }
         Ok(())
     }

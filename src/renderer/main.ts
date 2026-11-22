@@ -491,7 +491,10 @@ function setView(mode: ViewMode): void {
 }
 
 function copy(from: Side): void {
-  if (!view.copy(from)) status('Select text or put the cursor inside a difference section first')
+  if (view.copy(from)) return
+  status(view.diffCurrent
+    ? 'Select text or put the cursor inside a difference section first'
+    : 'The comparison is still updating — try again in a moment')
 }
 
 document.querySelectorAll<HTMLButtonElement>('#toolbar button').forEach((b) => {

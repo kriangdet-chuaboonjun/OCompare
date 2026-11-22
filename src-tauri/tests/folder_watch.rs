@@ -109,3 +109,40 @@ fn tabs_have_independent_watches_and_stopping_one_keeps_the_other() {
     // Re-watching a tab replaces only that tab's watcher and issues a new generation.
     assert!(watch("tab-2", second.path()) > second_generation);
 }
+
+#[test]
+fn changes_inside_ignored_folders_do_not_mark_the_comparison_stale() {
+    let root = tempfile::tempdir().unwrap();
+    fs::create_dir_all(root.path().join("Target/debug")).unwrap();
+    fs::create_dir_all(root.path().join("src")).unwrap();
+    let service = FolderWatchService::default();
+    let (tx, rx) = mpsc::channel();
+    service
+        .watch_ignoring(
+            "tab-a",
+            vec![root.path().to_owned()],
+            &["target".into()],
+            Arc::new(move |event| {
+                let _ = tx.send(event);
+            }),
+        )
+        .unwrap();
+    for index in 0..5 {
+        fs::write(root.path().join(format!("Target/debug/{index}.o")), "x").unwrap();
+    }
+    assert!(
+        rx.recv_timeout(Duration::from_millis(900)).is_err(),
+        "Ignored subtree must not report changes"
+    );
+    fs::write(root.path().join("src/main.rs"), "fn main() {}").unwrap();
+    assert!(rx.recv_timeout(Duration::from_secs(5)).is_ok());
+}
+
+#[test]
+fn invalid_ignored_folder_is_rejected() {
+    let root = tempfile::tempdir().unwrap();
+    let service = FolderWatchService::default();
+    assert!(service
+        .watch_ignoring("tab-a", vec![root.path().to_owned()], &["../x".into()], Arc::new(|_| {}))
+        .is_err());
+}

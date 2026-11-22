@@ -129,3 +129,71 @@ fn unreadable_file_is_set_aside_instead_of_blocking_the_next_save() {
         fs::remove_file(&path).unwrap();
     }
 }
+
+mod slots {
+    use super::sample;
+    use o_compare_rust::tab_drafts::{save, DraftSlots};
+    use std::path::Path;
+
+    fn open(dir: &Path) -> DraftSlots {
+        DraftSlots::open(dir.join("tab-drafts"), Some(dir.join("tab-drafts.json"))).unwrap()
+    }
+
+    #[test]
+    fn closing_a_window_without_edits_keeps_another_windows_drafts() {
+        let root = tempfile::tempdir().unwrap();
+        let a = open(root.path());
+        let b = open(root.path());
+        a.save(&sample()).unwrap();
+        drop(a);
+        b.clear().unwrap();
+        drop(b);
+        let next = open(root.path());
+        assert_eq!(next.load().unwrap()["tabs"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn running_windows_are_never_claimed_and_each_store_is_restored_once() {
+        let root = tempfile::tempdir().unwrap();
+        let a = open(root.path());
+        a.save(&sample()).unwrap();
+        let early = open(root.path());
+        assert_eq!(early.load().unwrap()["tabs"].as_array().unwrap().len(), 0, "a is still running");
+        drop(a);
+        let first = open(root.path());
+        let second = open(root.path());
+        assert_eq!(first.load().unwrap()["tabs"].as_array().unwrap().len(), 2);
+        assert_eq!(second.load().unwrap()["tabs"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn stores_of_several_closed_windows_merge_into_one_valid_store() {
+        let root = tempfile::tempdir().unwrap();
+        for _ in 0..2 {
+            let w = open(root.path());
+            w.save(&sample()).unwrap();
+        }
+        let next = open(root.path());
+        let merged = next.load().unwrap();
+        assert_eq!(merged["tabs"].as_array().unwrap().len(), 4);
+        assert_eq!(merged["documents"].as_array().unwrap().len(), 6);
+        assert_eq!(merged["active"], 1);
+        // Still a valid store: ids are unique and every tab refers to a document.
+        save(&root.path().join("check.json"), &merged).unwrap();
+    }
+
+    #[test]
+    fn legacy_file_is_claimed_and_a_crash_after_claiming_loses_nothing() {
+        let root = tempfile::tempdir().unwrap();
+        save(&root.path().join("tab-drafts.json"), &sample()).unwrap();
+        let crashed = open(root.path());
+        assert_eq!(crashed.load().unwrap()["tabs"].as_array().unwrap().len(), 2);
+        assert!(!root.path().join("tab-drafts.json").exists());
+        drop(crashed); // no save or clear: the process died
+        let next = open(root.path());
+        assert_eq!(next.load().unwrap()["tabs"].as_array().unwrap().len(), 2);
+        next.clear().unwrap();
+        drop(next);
+        assert_eq!(open(root.path()).load().unwrap()["tabs"].as_array().unwrap().len(), 0);
+    }
+}

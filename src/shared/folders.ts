@@ -46,7 +46,7 @@ export interface FolderProgress {
   visited: number
 }
 export interface FolderApi {
-  watchFolders?(tabId: string, leftPath: string, rightPath: string): Promise<number>
+  watchFolders?(tabId: string, leftPath: string, rightPath: string, ignoredFolders?: string[]): Promise<number>
   stopWatching?(tabId: string): Promise<void>
   onChanged?(callback: (event: FolderWatchEvent) => void): Promise<() => void>
   openDirectory(): Promise<string | null>

@@ -75,7 +75,7 @@ function pollWatchEvents(): void {
 }
 const progressListeners = new Set<(progress: FolderProgress) => void>()
 export const folderApi: FolderApi = {
-  watchFolders: (tabId, leftPath, rightPath) => transport('workspace', { action: 'watchFolders', tabId, leftPath, rightPath }),
+  watchFolders: (tabId, leftPath, rightPath, ignoredFolders = []) => transport('workspace', { action: 'watchFolders', tabId, leftPath, rightPath, ignoredFolders }),
   stopWatching: tabId => transport('workspace', { action: 'stopWatch', tabId }),
   onChanged: async callback => {
     changedListeners.add(callback)

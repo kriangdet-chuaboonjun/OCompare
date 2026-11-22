@@ -199,3 +199,37 @@ fn path_kinds_separates_folders_files_and_missing_paths() {
     let paths = [dir, file, root.path().join("missing")].map(|p| p.to_string_lossy().into_owned());
     assert_eq!(o_compare_rust::folder_copy::path_kinds(&paths), ["directory", "file", "other"]);
 }
+
+#[test]
+fn save_is_not_blocked_between_files_of_a_running_copy() {
+    use o_compare_rust::write_service::WriteService;
+    let (root, l, r) = fixture();
+    for name in ["a", "b"] {
+        fs::write(l.join(name), "new").unwrap();
+        fs::write(r.join(name), "old").unwrap();
+    }
+    let edited = root.path().join("edited.txt");
+    fs::write(&edited, "draft").unwrap();
+    let writes = WriteService::new(root.path().join("history"));
+    let service = CopyService::default();
+    let cancel = AtomicBool::new(false);
+    let plan = service
+        .plan(&l, &r, "left", &["a".into(), "b".into()], &cancel)
+        .unwrap();
+    let mut saves = 0;
+    let report = service
+        .execute_with_backups(
+            &plan.plan_id,
+            &cancel,
+            &mut |_, _, _| {
+                // The history lock must be free here, or this Save would wait for the whole copy.
+                writes.save(&edited, format!("saved {saves}").as_bytes()).unwrap();
+                saves += 1;
+            },
+            &writes,
+        )
+        .unwrap();
+    assert_eq!(saves, 2);
+    assert!(report.items.iter().all(|item| item.status == "copied"));
+    assert_eq!(fs::read(r.join("b")).unwrap(), b"new");
+}

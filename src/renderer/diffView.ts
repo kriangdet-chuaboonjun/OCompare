@@ -35,6 +35,8 @@ export class DiffView {
   private recompareKick = false
   private editingSuspended = false
   private pairViewModel: monaco.editor.IDiffEditorViewModel | undefined
+  /** Model versions the shown diff was computed for; null until the first diff of a pair. */
+  private diffVersions: [number, number] | null = null
 
   constructor(host: HTMLElement, services?: monaco.editor.IEditorOverrideServices) {
     this.editor = monaco.editor.createDiffEditor(host, {
@@ -66,6 +68,10 @@ export class DiffView {
 
     this.filter = new LineFilter(this.editor)
     this.editor.onDidUpdateDiff(() => {
+      // Attaching a pair reports "no diff yet" first; only a computed diff makes copying safe.
+      this.diffVersions = this.editor.getLineChanges()
+        ? [this.sides.left.model.getVersionId(), this.sides.right.model.getVersionId()]
+        : null
       // Re-filter on every recompare so edits and pasted text are filtered too
       this.applyFilter()
       this.emit()
@@ -92,6 +98,7 @@ export class DiffView {
     const previous = this.pairViewModel
     const next = this.editor.createViewModel({ original: this.sides.left.model, modified: this.sides.right.model })
     this.pairViewModel = next
+    this.diffVersions = null
     this.editor.setModel(next)
     // Cancel pending work before FileTabs retires the previous text models.
     previous?.dispose()
@@ -372,10 +379,20 @@ export class DiffView {
     return true
   }
 
+  /**
+   * True when the shown diff matches the current text. Until Monaco recompares after an edit,
+   * getLineChanges() describes the old text, and copying from it would hit the wrong lines
+   * (or insert the same block twice on a quick repeat).
+   */
+  get diffCurrent(): boolean {
+    const v = this.diffVersions
+    return v !== null && v[0] === this.sides.left.model.getVersionId() && v[1] === this.sides.right.model.getVersionId()
+  }
+
   /** Selection on the focused side first, otherwise the section under the cursor. */
   copy(from: Side): boolean {
     const to: Side = from === 'left' ? 'right' : 'left'
-    if (isVirtualPath(this.sides[to].path)) return false
+    if (isVirtualPath(this.sides[to].path) || !this.diffCurrent) return false
     const copied = (this.focused === from && this.copySelection(from)) || this.copySection(from)
     if (copied) this.recompareNow()
     return copied

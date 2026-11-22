@@ -401,3 +401,22 @@ fn recovery_cleans_bytes_left_after_prune_removed_catalog() {
     assert!(!old_bin.exists());
     assert_eq!(store.list(&file).unwrap().len(), 1);
 }
+
+#[test]
+fn copy_snapshots_are_pruned_before_save_history_when_the_quota_is_full() {
+    use o_compare_rust::backups::BackupStore;
+    let root = tempfile::tempdir().unwrap();
+    let saved = root.path().join("saved.txt");
+    let copied = root.path().join("copied.txt");
+    std::fs::write(&saved, "0123456789").unwrap();
+    let store = BackupStore::with_limits(root.path().join("history"), 20, 25);
+    store.prepare(&saved, "Save").unwrap().unwrap().commit().unwrap();
+    for i in 0..4 {
+        std::fs::write(&copied, format!("copy-{i:04}")).unwrap();
+        store.prepare(&copied, "Copy").unwrap().unwrap().commit().unwrap();
+    }
+    assert_eq!(store.list(&saved).unwrap().len(), 1, "Save history must survive a large copy");
+    let copies = store.list(&copied).unwrap();
+    assert_eq!(copies.len(), 1, "only the newest Copy snapshot fits beside it");
+    assert_eq!(copies[0].reason, "Copy");
+}

@@ -3,8 +3,8 @@ use crate::error::AppError;
 use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::Serialize;
 use std::{
-    collections::HashMap,
-    path::PathBuf,
+    collections::{HashMap, HashSet},
+    path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
         mpsc, Arc, Mutex,
@@ -50,6 +50,19 @@ impl FolderWatchService {
         roots: Vec<PathBuf>,
         callback: Arc<dyn Fn(FolderWatchEvent) + Send + Sync>,
     ) -> Result<u64, AppError> {
+        self.watch_ignoring(tab_id, roots, &[], callback)
+    }
+
+    /// Like `watch`, but changes inside ignored folders (relative `a/b` paths, the same list
+    /// the comparison skips) never mark the comparison stale.
+    pub fn watch_ignoring(
+        &self,
+        tab_id: &str,
+        roots: Vec<PathBuf>,
+        ignored_folders: &[String],
+        callback: Arc<dyn Fn(FolderWatchEvent) + Send + Sync>,
+    ) -> Result<u64, AppError> {
+        let ignored = crate::folders::validate_ignored_folders(ignored_folders)?;
         let mut slots = self
             .slots
             .lock()
@@ -64,17 +77,17 @@ impl FolderWatchService {
             Config::default().with_follow_symlinks(false),
         )
         .map_err(|e| AppError::new("FOLDER_WATCH", e, None))?;
-        for root in roots {
+        for root in &roots {
             if !root.is_dir() {
                 return Err(AppError::new(
                     "FOLDER_WATCH",
                     "Folder does not exist; press Refresh after fixing the path",
-                    Some(&root),
+                    Some(root),
                 ));
             }
             watcher
-                .watch(&root, RecursiveMode::Recursive)
-                .map_err(|e| AppError::new("FOLDER_WATCH", e, Some(&root)))?;
+                .watch(root, RecursiveMode::Recursive)
+                .map_err(|e| AppError::new("FOLDER_WATCH", e, Some(root)))?;
         }
         let stop = Arc::new(AtomicBool::new(false));
         let worker_stop = stop.clone();
@@ -103,6 +116,16 @@ impl FolderWatchService {
                                 )
                             )
                             && event.paths.iter().all(|path| path.is_dir())
+                        {
+                            continue;
+                        }
+                        if !ignored.is_empty()
+                            && !event.need_rescan()
+                            && !event.paths.is_empty()
+                            && event
+                                .paths
+                                .iter()
+                                .all(|path| is_ignored(path, &roots, &ignored))
                         {
                             continue;
                         }
@@ -139,4 +162,27 @@ impl FolderWatchService {
         slots.insert(tab_id.into(), Slot(stop));
         Ok(generation)
     }
+}
+
+/// True when `path` is an ignored folder of one of the roots, or lies inside one.
+fn is_ignored(path: &Path, roots: &[PathBuf], ignored: &HashSet<String>) -> bool {
+    roots.iter().any(|root| {
+        let Ok(relative) = path.strip_prefix(root) else {
+            return false;
+        };
+        let mut prefix = String::new();
+        for part in relative.components() {
+            let std::path::Component::Normal(part) = part else {
+                return false;
+            };
+            if !prefix.is_empty() {
+                prefix.push('/');
+            }
+            prefix.push_str(&part.to_string_lossy());
+            if ignored.contains(&crate::folders::path_key(&prefix)) {
+                return true;
+            }
+        }
+        false
+    })
 }

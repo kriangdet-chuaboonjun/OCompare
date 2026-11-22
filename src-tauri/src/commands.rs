@@ -102,28 +102,50 @@ pub async fn save_folder_sessions(
         .join("folder-sessions.json");
     blocking(move || crate::folder_sessions::save(&path, &store)).await
 }
-/// Unsaved Files-tab drafts live beside, not inside, the Folder Sessions store.
-fn tab_drafts_path(app: &tauri::AppHandle) -> Result<PathBuf, AppError> {
-    Ok(app
+/// Unsaved Files-tab drafts live beside, not inside, the Folder Sessions store: one file per
+/// window, so windows never overwrite or delete each other's recovery data.
+type DraftSlotsState = std::sync::OnceLock<Arc<crate::tab_drafts::DraftSlots>>;
+fn tab_drafts(
+    app: &tauri::AppHandle,
+    state: &DraftSlotsState,
+) -> Result<Arc<crate::tab_drafts::DraftSlots>, AppError> {
+    if let Some(slots) = state.get() {
+        return Ok(slots.clone());
+    }
+    let root = app
         .path()
         .app_data_dir()
-        .map_err(|e| AppError::new("APP_DATA", e, None))?
-        .join("tab-drafts.json"))
+        .map_err(|e| AppError::new("APP_DATA", e, None))?;
+    let slots = Arc::new(crate::tab_drafts::DraftSlots::open(
+        root.join("tab-drafts"),
+        Some(root.join("tab-drafts.json")),
+    )?);
+    Ok(state.get_or_init(|| slots).clone())
 }
 #[tauri::command]
-pub async fn load_tab_drafts(app: tauri::AppHandle) -> Result<serde_json::Value, AppError> {
-    let path = tab_drafts_path(&app)?;
-    blocking(move || crate::tab_drafts::load(&path)).await
+pub async fn load_tab_drafts(
+    app: tauri::AppHandle,
+    state: State<'_, DraftSlotsState>,
+) -> Result<serde_json::Value, AppError> {
+    let slots = tab_drafts(&app, &state)?;
+    blocking(move || slots.load()).await
 }
 #[tauri::command]
-pub async fn save_tab_drafts(app: tauri::AppHandle, store: serde_json::Value) -> Result<(), AppError> {
-    let path = tab_drafts_path(&app)?;
-    blocking(move || crate::tab_drafts::save(&path, &store)).await
+pub async fn save_tab_drafts(
+    app: tauri::AppHandle,
+    state: State<'_, DraftSlotsState>,
+    store: serde_json::Value,
+) -> Result<(), AppError> {
+    let slots = tab_drafts(&app, &state)?;
+    blocking(move || slots.save(&store)).await
 }
 #[tauri::command]
-pub async fn clear_tab_drafts(app: tauri::AppHandle) -> Result<(), AppError> {
-    let path = tab_drafts_path(&app)?;
-    blocking(move || crate::tab_drafts::clear(&path)).await
+pub async fn clear_tab_drafts(
+    app: tauri::AppHandle,
+    state: State<'_, DraftSlotsState>,
+) -> Result<(), AppError> {
+    let slots = tab_drafts(&app, &state)?;
+    blocking(move || slots.clear()).await
 }
 #[tauri::command]
 pub async fn folder_disk_space(path: String) -> Result<u64, AppError> {
@@ -180,13 +202,14 @@ pub async fn execute_folder_copy(
     let id = request_id.clone();
     let result=blocking(move||{
         let mut last=std::time::Instant::now()-std::time::Duration::from_secs(1);
-        writes.with_store(|store| service.execute_with_backups(&plan_id,&cancel,&mut |completed,total,path|{
+        // History is locked per file inside the copy, so Save keeps working during a long copy.
+        service.execute_with_backups(&plan_id,&cancel,&mut |completed,total,path|{
             if completed==total || last.elapsed()>=std::time::Duration::from_millis(100) {
                 let payload=serde_json::json!({"requestId":request_id,"completed":completed,"total":total,"relativePath":path});
                 if let Err(e)=app.emit_to("main","folder:copy-progress",payload){eprintln!("Copy progress failed: {e}");}
                 last=std::time::Instant::now();
             }
-        }, store))
+        }, &*writes)
     }).await;
     jobs.finish(&id);
     result
@@ -256,14 +279,16 @@ pub async fn watch_folders(
     tab_id: String,
     left_path: String,
     right_path: String,
+    ignored_folders: Option<Vec<String>>,
     app: tauri::AppHandle,
     service: State<'_, Arc<crate::folder_watch::FolderWatchService>>,
 ) -> Result<u64, AppError> {
     let service = service.inner().clone();
     blocking(move || {
-        service.watch(
+        service.watch_ignoring(
             &tab_id,
             vec![PathBuf::from(left_path), PathBuf::from(right_path)],
+            &ignored_folders.unwrap_or_default(),
             Arc::new(move |event| {
                 if let Err(error) = app.emit_to("main", "folder:changed", event) {
                     eprintln!("Folder watch event: {error}");
