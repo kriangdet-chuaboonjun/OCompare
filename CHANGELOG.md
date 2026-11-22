@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [0.4.19] - 2026-11-22
+
+- Unsaved text is no longer lost when several OCompare windows are open. Each window now keeps its own recovery data, so closing one window cannot remove or overwrite the unsaved tabs of another, and the next start restores the tabs of every window that was closed, each only once. Recovery data from earlier versions is picked up automatically.
+- Save keeps working in every window while a folder Copy is running, instead of waiting until the whole copy has finished.
+- A large folder Copy no longer pushes earlier Save versions out of History: when History is full, copies made by Copy are removed before versions made by Save.
+- Files larger than the 1 GB History limit are shown as skipped in the copy preview, with the reason, instead of failing during the copy. They are still never overwritten without a backup.
+- Copy no longer replaces a file that someone created in the destination after the preview was checked.
+- Changes inside ignored folders (for example build output) no longer mark a folder comparison as changed or block Copy.
+- With several folder tabs open, a change in one tab's folders no longer disables the "Copy now" button of another tab's copy preview, and a failed cleanup after a copy no longer leaves every tab unable to compare or copy.
+- Copy to Left/Right in Files waits for the comparison to catch up with your last edit, so pressing it twice quickly no longer inserts the same block twice.
+- The "More" toolbar menu in Folders no longer closes by itself while a comparison runs or the folders change.
+- Faster scrolling and filtering in large folder comparisons, faster switching between Files tabs, faster Minor checks, and faster Save of files whose size changed.
+- New rounded toolbar icons for Files, Folders and the path bars, in light and dark themes.
+
 ## [0.4.18] - 2026-11-11
 
 - Restore unsaved Files tabs after a normal close: closing the window stores every tab with unsaved text (Ctrl+T tabs and edited files, both sides, Thai included) in the app data folder without asking Save or Discard, and the next start brings them back in the same order, still modified, with the active tab selected. Original files change only when you press Save. If a file changed, moved or was deleted meanwhile, the draft is still restored and flagged: Save asks before replacing a changed file (the old version goes to History) and uses Save As for a missing one. If the recovery data cannot be written, OCompare says so and keeps the window open so you can try again or save your files. A comparison launched from Explorer opens in a new tab beside the restored ones.
